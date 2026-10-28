@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": [
+      "es2023"
+    ],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": [
+      "node"
+    ],
+    "strict": true,
+    "noEmit": true,
+    "verbatimModuleSyntax": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": [
+    "packages/*/src",
+    "packages/*/test",
+    "apps/desktop/src",
+    "apps/desktop/test"
+  ]
+}

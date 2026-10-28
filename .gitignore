@@ -1,0 +1,7 @@
+node_modules/
+/.cache/
+apps/*/dist/
+.angular/
+# Secrets live in the user profile (apps/desktop/src/main.ts); this only guards against copies.
+secrets.bin
+secrets.bin.tmp

@@ -1,0 +1,19 @@
+{
+  "name": "@stream-toolz/desktop",
+  "version": "0.0.1-alpha",
+  "license": "UNLICENSED",
+  "private": true,
+  "description": "Stream Toolz desktop app (Electron main process and preloads)",
+  "main": "dist/main.cjs",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "@stream-toolz/runtime": "*"
+  },
+  "devDependencies": {
+    "electron": "43.7.7",
+    "esbuild": "0.28.2"
+  }
+}

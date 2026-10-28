@@ -1,0 +1,12 @@
+{
+  "name": "@stream-toolz/runtime",
+  "version": "0.0.1-alpha",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "description": "Stream Toolz runtime: Twitch (EventSub), the ReadMyChat reader (filters, queue, speech); no Electron",
+  "exports": {
+    ".": "./src/index.ts",
+    "./app-api": "./src/app-api.ts"
+  }
+}
