@@ -54,13 +54,14 @@ The three checks in [02-desktop-app.md](02-desktop-app.md) "Before a release", r
 
 ## CI
 
-GitHub Actions workflows in `.github/workflows`, taken from GT Toolz on 2026-11-22 without its Discord announcement, its update signature (Stream Toolz has no update check) and its CLA bot (the license is proprietary, there are no outside contributors yet). All use Node 22.23.2 and `npm ci` (`.npmrc`: no install scripts, exact versions from the lockfile), run with read-only permissions unless a job needs more, and pin every action to an exact version at least 14 days old when pinned (Dependabot proposes newer ones with a 14-day cooldown, `.github/dependabot.yml`; npm packages are updated by hand).
+GitHub Actions workflows in `.github/workflows`, taken from GT Toolz on 2026-11-22 without its Discord announcement and its update signature (Stream Toolz has no update check); `cla.yml` came with the GPL-3.0 license the same day. All use Node 22.23.2 and `npm ci` (`.npmrc`: no install scripts, exact versions from the lockfile), run with read-only permissions unless a job needs more, and pin every action to an exact version at least 14 days old when pinned (Dependabot proposes newer ones with a 14-day cooldown, `.github/dependabot.yml`; npm packages are updated by hand).
 
 | Workflow | When | What |
 | --- | --- | --- |
 | `pr.yml` | every pull request to `main` | On Windows and Linux: `npm ci`, `npm audit signatures`, `npm run typecheck`, `npm test`, `npm run build:app`. Must be green before a merge. macOS comes with its installer ("Later"). |
 | `build.yml` | every push to `main` (and by hand) | The same checks. No installers and no uploads: installers are made only by the release, after the approval. |
 | `release.yml` | by hand only (Actions → Release → Run workflow) | A release, below. |
+| `cla.yml` | pull requests and their comments | The CLA bot: every contributor signs `CLA.md` once with a comment on their pull request; signatures are kept on the branch `cla-signatures`. It runs on `pull_request_target` without checking out the pull request's code. |
 
 **`release.yml`**, with the inputs `channel` (`alpha`, `beta`, `full`), `bump` (`none`, `pre`, `patch`, `minor`, `major`) and `version` (an exact version instead of the bump). Two approvals: before the first nothing is built or uploaded (only the plan, the checks and a preview); before the second nothing is published.
 

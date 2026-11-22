@@ -1,7 +1,7 @@
 {
   "name": "@stream-toolz/readmychat",
   "version": "0.1.0-beta",
-  "license": "UNLICENSED",
+  "license": "GPL-3.0-only",
   "private": true,
   "type": "module",
   "description": "ReadMyChat, a Stream Toolz module: reads the Twitch chat aloud (filters, queue, a voice per language). src: no Electron; main: the module in the main process, through its host",

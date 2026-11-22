@@ -22,6 +22,7 @@ The first release, 0.1.0-beta: Stream Toolz leaves the alpha (2026-11-22).
 
 ### Changed
 
+- **License:** GPL-3.0-only, as GT Toolz (2026-11-22); contributions under the CLA.
 - Renamed from ReadMyChat to Stream Toolz by Maldö (2026-10-28); the data folder moves over once.
 - The login asks only for the permissions of the modules that are on. New permissions: channel points redemptions
   (Channel Points) and writing chat messages (Chat Bot, the only module that writes).

@@ -15,3 +15,4 @@
 - [ ] No new dependency, or it is at least 14 days old and discussed first (docs/03-security.md).
 - [ ] Nothing new leaves the PC, and the logs stay free of chat messages, names, tokens and keys (docs/03-security.md).
 - [ ] No secret in the repository: Client IDs, tokens and certificates live in the user profile or in CI secrets only.
+- [ ] I signed the CLA (the bot asks on your first pull request).

@@ -78,9 +78,8 @@ Words matter too: say what the app does and what it does not do, and do not name
   with OBS, which Windows). "Fixes #123" closes the issue when it is merged.
 - The **PR build** runs the type check, the tests and the app build on Windows and Linux. It must be green.
 - A maintainer reviews it. Small changes may be asked for; that is normal and no judgement.
-- The source is public, the license is proprietary for now ([LICENSE](LICENSE)): by opening a pull request you agree
-  that your change may be used under it and under a later license of the project. You keep the copyright in what you
-  write. A contributor license agreement, as [GT Toolz](https://github.com/nfMalde/gt-toolz) has, may follow.
+- **The CLA:** on your first pull request the CLA bot asks you to sign the [Contributor License Agreement](CLA.md) by
+  writing a comment. Once is enough for all later pull requests. You keep the copyright in what you write.
 
 ## Dependencies
 

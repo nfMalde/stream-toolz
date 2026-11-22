@@ -1,7 +1,7 @@
 {
   "name": "stream-toolz",
   "version": "0.1.0-beta",
-  "license": "UNLICENSED",
+  "license": "GPL-3.0-only",
   "private": true,
   "description": "Stream Toolz by Maldö – tools for streamers, fully local. First module: ReadMyChat reads the Twitch chat aloud",
   "type": "module",

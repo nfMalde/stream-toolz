@@ -20,7 +20,7 @@
   <img alt="Status: beta" src="https://img.shields.io/badge/status-beta-orange?style=flat-square">
   <img alt="Platform: Windows" src="https://img.shields.io/badge/platform-Windows-lightgrey?style=flat-square">
   <img alt="Languages: German and English" src="https://img.shields.io/badge/languages-German%20%7C%20English-green?style=flat-square">
-  <a href="LICENSE"><img alt="License: proprietary" src="https://img.shields.io/badge/license-proprietary-blue?style=flat-square"></a>
+  <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square"></a>
   <a href="https://www.paypal.com/donate/?hosted_button_id=SVZHLRTQ6H4VL"><img alt="Donate" src="https://img.shields.io/badge/donate-paypal-blue?style=flat-square"></a>
   <a href="https://www.twitch.tv/maldoe"><img alt="Twitch: maldoe" src="https://img.shields.io/badge/twitch-maldoe-9146FF?style=flat-square&logo=twitch&logoColor=white"></a>
 </p>
@@ -287,9 +287,13 @@ See [docs/01-research-and-plan.md](docs/01-research-and-plan.md), [docs/02-deskt
 
 ## License
 
-The source is published so anyone can see what the app does; the license is proprietary for now (see
-[LICENSE](LICENSE)). Third-party components are listed with their licenses in
-[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) and in the app under About.
+Stream Toolz is free software: you can redistribute it and/or modify it under the terms of the
+**[GNU General Public License v3.0](LICENSE)** as published by the Free Software Foundation.
+
+Copyright (C) 2026 Malte Peters (Maldö)
+
+Contributions are accepted under the [Contributor License Agreement](CLA.md). Third-party components and voices keep
+their own licenses; they are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) and in the app under About.
 
 ## No warranty, no liability
 

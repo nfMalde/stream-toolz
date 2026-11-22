@@ -1,7 +1,7 @@
 {
   "name": "@stream-toolz/speech",
   "version": "0.1.0-beta",
-  "license": "UNLICENSED",
+  "license": "GPL-3.0-only",
   "private": true,
   "type": "module",
   "description": "Stream Toolz speech: Piper, Windows voices, optional voice packages (sherpa-onnx code kept for later); no Electron",
