@@ -215,10 +215,12 @@ jobs:
       id-token: write
       attestations: write
     steps:
+      # By name, into its own folder: with a pattern that matches one artifact only, download-artifact puts the files
+      # straight into "path" (the first release run, 2026-11-22: "Could not find subject"); GT Toolz has three.
       - uses: actions/download-artifact@v8.0.2
         with:
-          pattern: installers-*
-          path: artifacts
+          name: installers-windows
+          path: artifacts/installers-windows
       - uses: actions/attest-build-provenance@v4.2.2
         with:
           subject-path: artifacts/installers-windows/**/*.exe
@@ -238,6 +240,7 @@ jobs:
           ref: ${{ needs.plan.outputs.sha }}
           fetch-depth: 0
           persist-credentials: false
+      # Every artifact of the run (the installer and the notes), each into its own folder below artifacts/.
       - uses: actions/download-artifact@v8.0.2
         with:
           path: artifacts
