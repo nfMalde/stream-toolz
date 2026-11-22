@@ -39,14 +39,14 @@ The three checks in [02-desktop-app.md](02-desktop-app.md) "Before a release", r
 
 ## Versions and changelog
 
-- **The version** is set in the root `package.json` (now `0.1.0-beta`: the first release leaves the alpha, the user, 2026-11-22); every workspace's `package.json` carries the same version, and step 1 refuses a mismatch. The app shows `app.getVersion()` from the staged `package.json`.
-- Versions follow semver; a pre-release has a suffix (`0.1.0-beta`, `0.1.0-beta.2`); `alpha` stays available as a channel.
+- **The version** is set in the root `package.json` (now `1.0.0-beta`: the first release leaves the alpha, the user, 2026-11-22); every workspace's `package.json` carries the same version, and step 1 refuses a mismatch. The app shows `app.getVersion()` from the staged `package.json`.
+- Versions follow semver; a pre-release has a suffix (`1.0.0-beta`, `1.0.0-beta.2`); `alpha` stays available as a channel.
 - **Changelog:** `CHANGELOG.md` (Keep a Changelog). Each release on GitHub shows its section.
 - **The release plan** (`scripts/release/plan.mjs`, from GT Toolz without its news files) works out the next version and, with `--apply`, prepares the tree for it: the version in every `package.json` and the lockfile, `CHANGELOG.md`'s "Unreleased" section as the version's (with the date). It writes the version's changelog section plus the download notes to `release/notes.md`.
 
   ```bash
-  node scripts/release/plan.mjs --channel=beta --bump=pre           # 0.1.0-beta → 0.1.0-beta.2 (only shows the plan)
-  node scripts/release/plan.mjs --channel=full                      # 0.1.0-beta → 0.1.0
+  node scripts/release/plan.mjs --channel=beta --bump=pre           # 1.0.0-beta → 1.0.0-beta.2 (only shows the plan)
+  node scripts/release/plan.mjs --channel=full                      # 1.0.0-beta → 1.0.0
   node scripts/release/plan.mjs --channel=beta --version=0.2.0-beta --apply
   ```
 

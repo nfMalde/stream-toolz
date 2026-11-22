@@ -16,7 +16,7 @@ body:
     attributes:
       label: Stream Toolz version
       description: Shown under About.
-      placeholder: 0.1.0-beta
+      placeholder: 1.0.0-beta
     validations:
       required: true
   - type: dropdown
