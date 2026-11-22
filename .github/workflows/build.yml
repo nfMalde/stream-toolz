@@ -33,7 +33,17 @@ jobs:
           package-manager-cache: false
       # .npmrc: no install scripts, exact versions from the lockfile.
       - run: npm ci
-      - run: npm audit signatures
+      # The registry's signing keys are fetched for this check; now and then they are missing for a moment
+      # ("pkijs@3.4.3 has attestations but no corresponding public key(s)", 2026-11-22, two main builds in a row,
+      # green on a re-run): three tries, 30 s apart, before the build counts as failed.
+      - name: npm audit signatures
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            npm audit signatures && exit 0
+            [ "$attempt" -lt 3 ] && sleep 30
+          done
+          exit 1
       - run: npm run typecheck
       - run: npm test
       - run: npm run build:app
