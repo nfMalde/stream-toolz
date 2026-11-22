@@ -61,7 +61,7 @@ GitHub Actions workflows in `.github/workflows`, taken from GT Toolz on 2026-11-
 | `pr.yml` | every pull request to `main` | On Windows and Linux: `npm ci`, `npm audit signatures`, `npm run typecheck`, `npm test`, `npm run build:app`. Must be green before a merge. macOS comes with its installer ("Later"). |
 | `build.yml` | every push to `main` (and by hand) | The same checks. No installers and no uploads: installers are made only by the release, after the approval. |
 | `release.yml` | by hand only (Actions → Release → Run workflow) | A release, below. |
-| `cla.yml` | pull requests and their comments | The CLA bot: every contributor signs `CLA.md` once with a comment on their pull request; signatures are kept on the branch `cla-signatures`. It runs on `pull_request_target` without checking out the pull request's code. |
+| `cla.yml` | pull requests and their comments | The CLA bot: every contributor signs `CLA.md` once with a comment on their pull request; signatures are kept on the branch `cla-signatures` (an orphan branch with `signatures/cla.json`, created by hand on 2026-11-22: the action cannot create it while the branch ruleset exists, "Branch cla-signatures not found"). It runs on `pull_request_target` without checking out the pull request's code. |
 
 **`release.yml`**, with the inputs `channel` (`alpha`, `beta`, `full`), `bump` (`none`, `pre`, `patch`, `minor`, `major`) and `version` (an exact version instead of the bump). Two approvals: before the first nothing is built or uploaded (only the plan, the checks and a preview); before the second nothing is published.
 
