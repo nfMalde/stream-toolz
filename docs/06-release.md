@@ -47,7 +47,7 @@ The three checks in [02-desktop-app.md](02-desktop-app.md) "Before a release", r
   ```bash
   node scripts/release/plan.mjs --channel=beta --bump=pre           # 1.0.0-beta → 1.0.0-beta.2 (only shows the plan)
   node scripts/release/plan.mjs --channel=full                      # 1.0.0-beta → 1.0.0
-  node scripts/release/plan.mjs --channel=beta --version=0.2.0-beta --apply
+  node scripts/release/plan.mjs --channel=beta --version=1.1.0-beta --apply
   ```
 
   Channels: `alpha` and `beta` (pre-releases, `<version>-alpha[.n]`, `<version>-beta[.n]`) and `full`. Bumps: `none`, `pre`, `patch`, `minor`, `major`; an explicit `--version` wins. Tested in `apps/desktop/test/release-plan.test.ts`.
