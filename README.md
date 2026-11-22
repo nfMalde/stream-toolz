@@ -20,6 +20,7 @@
   <img alt="Status: beta" src="https://img.shields.io/badge/status-beta-orange?style=flat-square">
   <img alt="Platform: Windows" src="https://img.shields.io/badge/platform-Windows-lightgrey?style=flat-square">
   <img alt="Languages: German and English" src="https://img.shields.io/badge/languages-German%20%7C%20English-green?style=flat-square">
+  <a href="https://github.com/nfMalde/stream-toolz/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/nfMalde/stream-toolz/total?style=flat-square"></a>
   <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square"></a>
   <a href="https://www.paypal.com/donate/?hosted_button_id=SVZHLRTQ6H4VL"><img alt="Donate" src="https://img.shields.io/badge/donate-paypal-blue?style=flat-square"></a>
   <a href="https://www.twitch.tv/maldoe"><img alt="Twitch: maldoe" src="https://img.shields.io/badge/twitch-maldoe-9146FF?style=flat-square&logo=twitch&logoColor=white"></a>
