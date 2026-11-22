@@ -1,7 +1,7 @@
 import { Component, DestroyRef, inject, input, output, signal } from '@angular/core';
-import { isValidHotkey, type HotkeyState } from '@rmc/api';
+import { isValidHotkey, type HotkeyState } from '@stz/api';
 import { acceleratorFrom, keyLabels } from '../core/hotkey';
-import { RMC } from '../core/rmc';
+import { STZ } from '../core/stz';
 import { I18n } from '../i18n/i18n';
 import { Icon } from './icon';
 
@@ -10,7 +10,7 @@ import { Icon } from './icon';
  * shortcuts are off meanwhile, so the old key does not fire), or switches it off.
  */
 @Component({
-  selector: 'rmc-hotkey-field',
+  selector: 'stz-hotkey-field',
   imports: [Icon],
   template: `
     @if (recording()) {
@@ -31,7 +31,7 @@ import { Icon } from './icon';
       } @else {
         <span class="faint small">{{ t('hotkey.none') }}</span>
       }
-      <button type="button" class="btn sm" (click)="start()"><rmc-icon name="sliders" [size]="13" />{{ t('hotkey.change') }}</button>
+      <button type="button" class="btn sm" (click)="start()"><stz-icon name="sliders" [size]="13" />{{ t('hotkey.change') }}</button>
       @if (value()) {
         <button type="button" class="btn sm ghost" (click)="changed.emit('')">{{ t('hotkey.off') }}</button>
       }
@@ -48,7 +48,7 @@ export class HotkeyField {
   readonly state = input<HotkeyState>('off');
   readonly changed = output<string>();
 
-  private readonly rmc = inject(RMC);
+  private readonly stz = inject(STZ);
   private readonly i18n = inject(I18n);
   protected readonly t = this.i18n.t;
   protected readonly recording = signal(false);
@@ -80,7 +80,7 @@ export class HotkeyField {
   protected start(): void {
     this.hint.set(undefined);
     this.recording.set(true);
-    void this.rmc.suspendHotkeys(true).catch(() => undefined);
+    void this.stz.suspendHotkeys(true).catch(() => undefined);
     document.addEventListener('keydown', this.onKey, true);
   }
 
@@ -88,6 +88,6 @@ export class HotkeyField {
     if (!this.recording()) return;
     this.recording.set(false);
     document.removeEventListener('keydown', this.onKey, true);
-    void this.rmc.suspendHotkeys(false).catch(() => undefined);
+    void this.stz.suspendHotkeys(false).catch(() => undefined);
   }
 }

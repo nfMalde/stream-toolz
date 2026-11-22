@@ -1,0 +1,44 @@
+{
+  "format": "stream-toolz-language-pack",
+  "version": 1,
+  "id": "de",
+  "name": "Deutsch",
+  "locale": "de-DE",
+  "letters": "äöüß",
+  "words": [
+    "ich", "du", "er", "wir", "ihr", "mich", "mir", "dich", "dir", "uns", "euch", "und", "oder", "aber", "nicht", "kein", "keine", "keinen",
+    "ist", "sind", "bist", "hab", "habe", "hast", "haben", "hatte", "wird", "werden", "wurde", "kann", "kannst", "muss", "musst", "soll",
+    "sollte", "darf", "mag", "gibt", "geht", "gehts", "macht", "mach", "mache", "machen", "sag", "sagt",
+    "schon", "noch", "auch", "nur", "mal", "jetzt", "heute", "morgen", "gestern", "immer", "nie", "wieder", "sehr", "mehr", "viel", "gleich",
+    "bitte", "danke", "hallo", "moin", "servus", "nein", "nee", "ja", "doch", "genau", "richtig", "echt", "krass", "geil", "alter", "digga",
+    "leute", "der", "das", "den", "dem", "des", "ein", "eine", "einen", "einem", "einer", "mit", "auf", "zum", "zur", "bei", "nach", "vor",
+    "aus", "wie", "warum", "wieso", "wer", "wo", "wann", "welche", "dass", "weil", "wenn", "dann", "als", "hier", "da", "dort",
+    "gerade", "grad", "eigentlich", "vielleicht", "wirklich", "ganz", "sowas", "bisschen", "gut", "klar", "oki", "jo",
+    "toll", "prima", "klasse", "lecker", "schade", "wunderbar", "wahnsinn", "endlich", "stimmt", "passt", "willkommen", "gute", "guten",
+    "abend", "nacht", "tschau", "spiel", "spielen", "spielt", "ach", "achso", "naja", "halt", "eben", "wohl", "gern", "gerne", "herzlich",
+    "gratuliere", "nabend"
+  ],
+  "texts": {
+    "says": "{name} sagt: {message}",
+    "link": "Link",
+    "testName": "Read My Chat",
+    "outputTest": "Hallo! So klingt der Chat auf diesem Ausgang.",
+    "preview": "Hallo Chat! So klinge ich, wenn ich eure Nachrichten vorlese.",
+    "anonymous": "Jemand",
+    "prime": "Prime",
+    "tier": "Stufe {n}",
+    "events": {
+      "follow": "{name} folgt jetzt dem Kanal. Willkommen!",
+      "sub": "{name} hat den Kanal abonniert. Danke!",
+      "prime": "{name} hat mit Prime abonniert. Danke!",
+      "resub": "{name} ist jetzt {months} Monate dabei. Danke!",
+      "gift": "{name} verschenkt ein Abo an {recipient}. Danke!",
+      "communityGift": "{name} verschenkt {count} Abos an die Community. Danke!",
+      "raid": "{name} raidet den Kanal mit {count} Zuschauern. Willkommen!"
+    },
+    "eventsOne": {
+      "communityGift": "{name} verschenkt ein Abo an die Community. Danke!",
+      "raid": "{name} raidet den Kanal mit einem Zuschauer. Willkommen!"
+    }
+  }
+}

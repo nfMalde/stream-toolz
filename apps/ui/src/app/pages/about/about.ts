@@ -1,15 +1,15 @@
 import { Component, computed, inject, resource, signal } from '@angular/core';
-import type { LicenseEntry } from '@rmc/api';
-import { PRODUCT_BYLINE, PRODUCT_NAME } from '@rmc/api';
+import type { LicenseEntry } from '@stz/api';
+import { PRODUCT_BYLINE, PRODUCT_NAME } from '@stz/api';
 import { LINK_ICONS, LINK_NAMES, Links } from '../../core/links';
-import { RMC } from '../../core/rmc';
+import { STZ } from '../../core/stz';
 import { I18n, type TextKey } from '../../i18n/i18n';
 import { SettingsStore } from '../../stores/settings.store';
 import { Icon } from '../../ui/icon';
 
 /** About (laid out as in GT Toolz): Maldö's logo, privacy, support and channels, the third-party licenses. */
 @Component({
-  selector: 'rmc-about',
+  selector: 'stz-about',
   imports: [Icon],
   template: `
     <div class="page">
@@ -21,7 +21,7 @@ import { Icon } from '../../ui/icon';
           <p class="muted">{{ t('about.tagline') }}</p>
           <div class="row wrap">
             <span class="chip accent">{{ t('about.version') }} {{ settings.info()?.version }}</span>
-            <span class="chip ok"><rmc-icon name="heart" [size]="13" />{{ t('about.free') }}</span>
+            <span class="chip ok"><stz-icon name="heart" [size]="13" />{{ t('about.free') }}</span>
           </div>
         </div>
       </section>
@@ -29,12 +29,12 @@ import { Icon } from '../../ui/icon';
       <div class="columns">
         <section class="card">
           <div class="card-header">
-            <div class="card-icon accent"><rmc-icon name="shield" /></div>
+            <div class="card-icon accent"><stz-icon name="shield" /></div>
             <h2>{{ t('about.privacy') }}</h2>
           </div>
           <ul class="checks">
             @for (key of privacy; track key) {
-              <li><rmc-icon name="check" [size]="16" [weight]="2.4" />{{ t(key) }}</li>
+              <li><stz-icon name="check" [size]="16" [weight]="2.4" />{{ t(key) }}</li>
             }
           </ul>
           <p class="faint small">{{ t('about.privacyNote') }}</p>
@@ -42,14 +42,14 @@ import { Icon } from '../../ui/icon';
 
         <section class="card">
           <div class="card-header">
-            <div class="card-icon accent"><rmc-icon name="heart" /></div>
+            <div class="card-icon accent"><stz-icon name="heart" /></div>
             <h2>{{ t('about.support') }}</h2>
           </div>
           <p class="muted">{{ t('about.supportText') }}</p>
           @if (links.support().length) {
             <div class="row wrap links">
               @for (id of links.support(); track id) {
-                <button type="button" class="btn primary" (click)="links.open(id)"><rmc-icon [name]="icons[id]" [size]="15" />{{ t('links.donate', { name: names[id] }) }}</button>
+                <button type="button" class="btn primary" (click)="links.open(id)"><stz-icon [name]="icons[id]" [size]="15" />{{ t('links.donate', { name: names[id] }) }}</button>
               }
             </div>
           }
@@ -58,7 +58,7 @@ import { Icon } from '../../ui/icon';
             <p class="muted">{{ t('about.channelsText') }}</p>
             <div class="row wrap links">
               @for (id of links.channels(); track id) {
-                <button type="button" class="btn" (click)="links.open(id)"><rmc-icon [name]="icons[id]" [size]="15" />{{ names[id] }}</button>
+                <button type="button" class="btn" (click)="links.open(id)"><stz-icon [name]="icons[id]" [size]="15" />{{ names[id] }}</button>
               }
             </div>
           }
@@ -69,13 +69,13 @@ import { Icon } from '../../ui/icon';
 
       <section class="card">
         <div class="card-header">
-          <div class="card-icon accent"><rmc-icon name="heart" /></div>
+          <div class="card-icon accent"><stz-icon name="heart" /></div>
           <div>
             <h2>{{ t('about.licenses') }}</h2>
             <p class="faint small">{{ t('about.licensesHint') }}</p>
           </div>
           <span class="spacer"></span>
-          <button type="button" class="btn sm" (click)="chromium()"><rmc-icon name="external" [size]="14" />{{ t('about.chromium') }}</button>
+          <button type="button" class="btn sm" (click)="chromium()"><stz-icon name="external" [size]="14" />{{ t('about.chromium') }}</button>
         </div>
         @for (group of groups(); track group.id) {
           <h3 class="group">{{ t(group.title) }}</h3>
@@ -92,7 +92,7 @@ import { Icon } from '../../ui/icon';
                   @if (entry.text) {
                     <button type="button" class="btn sm ghost" (click)="toggle(entry.name)">
                       {{ open().has(entry.name) ? t('about.hideText') : t('about.showText') }}
-                      <rmc-icon [name]="open().has(entry.name) ? 'chevronDown' : 'chevronRight'" [size]="14" />
+                      <stz-icon [name]="open().has(entry.name) ? 'chevronDown' : 'chevronRight'" [size]="14" />
                     </button>
                   }
                 </div>
@@ -125,7 +125,7 @@ import { Icon } from '../../ui/icon';
     @media (max-width: 1100px) { .columns { grid-template-columns: 1fr; } }
     .checks { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
     .checks li { display: flex; gap: 10px; align-items: flex-start; }
-    .checks rmc-icon { color: var(--ok); margin-top: 2px; }
+    .checks stz-icon { color: var(--ok); margin-top: 2px; }
     .links { margin-top: 12px; }
     .group { margin: 16px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--text-3); }
     .licenses { display: flex; flex-direction: column; }
@@ -142,7 +142,7 @@ import { Icon } from '../../ui/icon';
 })
 export class About {
   protected readonly settings = inject(SettingsStore);
-  private readonly rmc = inject(RMC);
+  private readonly stz = inject(STZ);
   protected readonly t = inject(I18n).t;
   protected readonly product = PRODUCT_NAME;
   protected readonly byline = PRODUCT_BYLINE;
@@ -152,7 +152,7 @@ export class About {
   protected readonly icons = LINK_ICONS;
   protected readonly privacy: TextKey[] = ['about.privacy1', 'about.privacy2', 'about.privacy3', 'about.privacy4'];
 
-  private readonly licenses = resource({ loader: () => this.rmc.licenses() });
+  private readonly licenses = resource({ loader: () => this.stz.licenses() });
   protected readonly groups = computed(() => {
     const entries = this.licenses.value() ?? [];
     return [
@@ -178,6 +178,6 @@ export class About {
   }
 
   protected chromium(): void {
-    void this.rmc.openChromiumLicenses();
+    void this.stz.openChromiumLicenses();
   }
 }

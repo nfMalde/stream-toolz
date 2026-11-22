@@ -10,6 +10,7 @@ const ICONS = {
   plug: ['M9 3.5v4', 'M15 3.5v4', 'M6.5 7.5h11v3a5.5 5.5 0 0 1-11 0z', 'M12 16v4.5'],
   mic: ['M9 6a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0z', 'M5.5 11a6.5 6.5 0 0 0 13 0', 'M12 17.5V21'],
   sliders: ['M3 8h4', 'M11 8h10', 'M7 6h4v4H7z', 'M3 16h9', 'M16 16h5', 'M12 14h4v4h-4z'],
+  modules: ['M4.5 4.5h6v6h-6z', 'M13.5 4.5h6v6h-6z', 'M4.5 13.5h6v6h-6z', 'M13.5 13.5h6v6h-6z'],
   guide: ['M9 4 3.5 6v14L9 18l6 2 5.5-2V4L15 6z', 'M9 4v14', 'M15 6v14'],
   info: [c(12, 12, 9), 'M12 11v5', 'M12 7.8h.01'],
   play: ['M8 5.5v13l10.5-6.5z'],
@@ -56,7 +57,7 @@ const ICONS = {
 export type IconName = keyof typeof ICONS;
 
 @Component({
-  selector: 'rmc-icon',
+  selector: 'stz-icon',
   template: `
     <svg viewBox="0 0 24 24" [attr.width]="size()" [attr.height]="size()" fill="none" stroke="currentColor"
          [attr.stroke-width]="weight()" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

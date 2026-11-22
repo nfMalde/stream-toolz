@@ -8,21 +8,21 @@ import { Icon } from './icon';
  * About. Opens a page in the browser only on a click.
  */
 @Component({
-  selector: 'rmc-link-bar',
+  selector: 'stz-link-bar',
   imports: [Icon],
   template: `
     @if (links.support().length || links.channels().length) {
       <nav class="bar" [attr.aria-label]="t('links.bar')">
         @for (id of links.support(); track id) {
           <button type="button" class="donate focusable" [title]="t('links.donate', { name: names[id] })" (click)="links.open(id)">
-            <rmc-icon [name]="icons[id]" [size]="13" />{{ t('links.donateShort') }}
+            <stz-icon [name]="icons[id]" [size]="13" />{{ t('links.donateShort') }}
           </button>
         }
         @if (links.support().length && links.channels().length) { <span class="sep"></span> }
         @for (id of links.channels(); track id) {
           <button type="button" class="channel focusable" [title]="t('links.follow', { name: names[id] })"
                   [attr.aria-label]="t('links.follow', { name: names[id] })" (click)="links.open(id)">
-            <rmc-icon [name]="icons[id]" [size]="15" />
+            <stz-icon [name]="icons[id]" [size]="15" />
           </button>
         }
       </nav>

@@ -4,7 +4,7 @@ import { SettingsStore } from '../../stores/settings.store';
 
 /** Which channel's chat is read: empty for the own channel (a mod can read the streamer's chat). */
 @Component({
-  selector: 'rmc-channel-field',
+  selector: 'stz-channel-field',
   template: `
     <div class="setting">
       <div class="text">

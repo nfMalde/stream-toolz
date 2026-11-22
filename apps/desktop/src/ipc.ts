@@ -1,38 +1,41 @@
-// IPC between the UI (window.rmc, see preload.ts) and the main process. Every call is checked: it must
-// come from the app's own page, and its arguments are validated here, not trusted.
+// IPC between the UI (window.stz, see preload.ts) and the shell in the main process. Every call is checked: it must
+// come from the app's own page (bridge.ts), and its arguments are validated here, not trusted. The modules' calls
+// (window.stz.<id>) are registered by their hosts (modules.ts).
 
 import fs from 'node:fs';
-import { app, clipboard, ipcMain, shell, type IpcMainInvokeEvent } from 'electron';
+import { app, clipboard, shell } from 'electron';
 import {
-  CHANNEL_EVENT_KINDS,
+  asObject,
+  asString,
+  PRODUCT_NAME,
+  type AppConfig,
+  type AppInfo,
+  type AppSettings,
+  type CopyId,
+  type FolderId,
+  type LinkId,
+  type ModuleState,
+  type OutputStatus,
+} from '@stream-toolz/core';
+import {
+  availableVoices,
   installPackages,
   isInstalled,
   packageSize,
   preselectedPackages,
-  PRODUCT_NAME,
   readVoicePackages,
   removePackages,
-  type AppConfig,
-  type AppInfo,
-  type ChannelEventKind,
-  type ChatReader,
-  type CopyId,
-  type FolderId,
   type InstallState,
-  type LinkId,
-  type Settings,
-  TwitchFailure,
-  type TwitchConnection,
-  type TwitchStatus,
   type VoicePackageInfo,
-} from '@stream-toolz/runtime';
+} from '@stream-toolz/speech';
+import { TwitchFailure, type TwitchConnection, type TwitchStatus } from '@stream-toolz/twitch';
 import type { DeviceAudio } from './audio';
+import type { ObsOutput } from './obs';
+import { handle as handleChannel } from './bridge';
 import type { Hotkeys } from './hotkeys';
 import { chromiumLicensesFile, licenseEntries } from './licenses';
 import type { SecretFile } from './secrets';
-import { fromApp } from './security';
 import { mapStack } from './stack-map';
-import type { VoiceHolder } from './voice';
 
 export interface IpcContext {
   dataDir: string;
@@ -42,20 +45,18 @@ export interface IpcContext {
   dev: boolean;
   secrets: SecretFile;
   twitch: TwitchConnection;
-  reader: ChatReader;
-  voice: VoiceHolder;
   audio: DeviceAudio;
+  obs: ObsOutput;
   hotkeys: Hotkeys;
   getConfig: () => AppConfig;
-  twitchStatus: () => TwitchStatus;
-  /** Validates, applies and saves a settings change. */
-  applySettings: (change: Record<string, unknown>) => Promise<Settings>;
+  /** Validates, applies and saves a change of the app's settings. */
+  applyAppSettings: (change: Record<string, unknown>) => Promise<AppSettings>;
+  setModuleEnabled: (id: string, enabled: boolean) => Record<string, ModuleState>;
   setGuideDone: (done: boolean) => void;
+  outputStatus: () => OutputStatus;
   obsUrl: () => string;
-  testOutput: () => Promise<void>;
-  previewVoice: (id: string) => Promise<void>;
-  /** Voice packages were installed or removed. */
-  voicesChanged: () => void;
+  /** Voice packages are about to be removed, or were installed or removed. */
+  voicesChanged: (phase: 'removing' | 'changed') => void;
   log: (line: string) => void;
   send: (channel: string, value: unknown) => void;
 }
@@ -82,21 +83,13 @@ const MAX_ERRORS_PER_WINDOW = 20;
 const ERROR_WINDOW_MS = 60_000;
 
 export function registerIpc(ctx: IpcContext): void {
-  const { twitch, reader } = ctx;
-
-  const handle = (name: string, handler: (...args: unknown[]) => unknown) => {
-    ipcMain.handle(`rmc:${name}`, (event: IpcMainInvokeEvent, ...args: unknown[]) => {
-      if (!fromApp(event)) throw new Error('Not allowed');
-      return handler(...args);
-    });
-  };
+  const { twitch } = ctx;
+  const handle = (name: string, handler: (...args: unknown[]) => unknown) => void handleChannel(`stz:${name}`, handler);
 
   // --- Events to the UI ---
-  twitch.on('status', () => ctx.send('rmc:twitch-status', ctx.twitchStatus()));
-  reader.on('status', (status) => ctx.send('rmc:reader-status', status));
-  reader.on('log', (entry) => ctx.send('rmc:chat-log', entry));
+  twitch.on('status', () => ctx.send('stz:twitch-status', twitch.status));
 
-  // --- App ---
+  // --- App and modules ---
   handle(
     'info',
     (): AppInfo => ({
@@ -105,7 +98,7 @@ export function registerIpc(ctx: IpcContext): void {
       electron: process.versions.electron,
       chrome: process.versions.chrome,
       node: process.versions.node,
-      dataDir: ctx.dataDir,
+      // Not the data folder: its path holds the Windows user name, and the page opens it through openFolder.
       dev: ctx.dev,
       // Other Unix systems (FreeBSD …) get the Linux texts.
       platform: process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'mac' : 'linux',
@@ -113,11 +106,12 @@ export function registerIpc(ctx: IpcContext): void {
     }),
   );
   handle('getConfig', () => ctx.getConfig());
-  handle('setSettings', (change) => ctx.applySettings(asObject(change)));
+  handle('setAppSettings', (change) => ctx.applyAppSettings(asObject(change)));
+  handle('setModuleEnabled', (id, enabled) => ctx.setModuleEnabled(asString(id), enabled === true));
   handle('setGuideDone', (done) => ctx.setGuideDone(done === true));
 
   // --- Twitch ---
-  handle('twitchStatus', () => ctx.twitchStatus());
+  handle('twitchStatus', () => twitch.status);
   handle('saveTwitchApp', async (input) => {
     const value = asObject(input);
     try {
@@ -126,11 +120,11 @@ export function registerIpc(ctx: IpcContext): void {
       // The UI shows a text per error code ("invalid-client", "network"), not Twitch's own message.
       throw new Error(err instanceof TwitchFailure ? err.code : 'unknown');
     }
-    return ctx.twitchStatus();
+    return twitch.status;
   });
-  handle('removeTwitchApp', async () => {
+  handle('removeTwitchApp', async (): Promise<TwitchStatus> => {
     await twitch.removeApp();
-    return ctx.twitchStatus();
+    return twitch.status;
   });
   // Not awaited: the login waits for the streamer's confirmation on Twitch; the status follows by event.
   handle('twitchLogin', () => void twitch.beginLogin());
@@ -138,39 +132,21 @@ export function registerIpc(ctx: IpcContext): void {
   handle('cancelTwitchLogin', () => twitch.cancelLogin());
   handle('twitchLogout', () => twitch.logout());
 
-  // --- Reader ---
-  handle('readerStatus', () => reader.status);
-  handle('chatLog', () => reader.log);
-  handle('pause', () => reader.pause());
-  handle('resume', () => reader.resume());
-  handle('skip', () => reader.skip());
-  handle('clearQueue', () => reader.clear());
-  handle('removeQueued', (id) => reader.remove(asString(id)));
-  handle('testMessage', (text) => {
-    const value = asText(text).trim();
-    if (value) reader.test(value);
-  });
-  handle('testEvent', (kind) => {
-    if (CHANNEL_EVENT_KINDS.includes(kind as ChannelEventKind)) reader.testEvent(kind as ChannelEventKind);
-  });
-  handle('learnReward', () => reader.learnReward(true));
-  handle('cancelLearnReward', () => reader.learnReward(false));
-
-  // --- Output ---
+  // --- Outputs ---
+  handle('outputStatus', () => ctx.outputStatus());
   handle('obsUrl', () => ctx.obsUrl());
   handle('newObsKey', () => {
     ctx.secrets.newObsKey();
+    // Sources holding the old address reconnect, fail under the old key and are gone for good.
+    ctx.obs.dropClients();
     return ctx.obsUrl();
   });
   handle('audioDevices', () => ctx.audio.devices());
-  handle('testOutput', () => ctx.testOutput());
 
   // --- Voices ---
-  handle('listVoices', () => ctx.voice.voices());
-  handle('previewVoice', (id) => ctx.previewVoice(asString(id)));
+  handle('listVoices', () => availableVoices(ctx.dirs.voices));
   handle('voicePackages', (): VoicePackageInfo[] => {
-    const settings = ctx.getConfig().settings;
-    const preselected = new Set(preselectedPackages(settings.speechLanguage).map((p) => p.id));
+    const preselected = new Set(preselectedPackages(ctx.getConfig().app.language).map((p) => p.id));
     return readVoicePackages().packages.map((pkg) => ({
       id: pkg.id,
       kind: pkg.kind,
@@ -192,7 +168,7 @@ export function registerIpc(ctx: IpcContext): void {
 
   let install: AbortController | undefined;
   let lastProgressAt = 0;
-  const sendInstall = (state: InstallState) => ctx.send('rmc:voice-install', state);
+  const sendInstall = (state: InstallState) => ctx.send('stz:voice-install', state);
 
   handle('installVoicePackages', async (ids) => {
     if (install) throw new Error('An installation is already running');
@@ -213,7 +189,7 @@ export function registerIpc(ctx: IpcContext): void {
         },
       });
       sendInstall({ state: 'done', ids: selection });
-      ctx.voicesChanged();
+      ctx.voicesChanged('changed');
     } catch (err) {
       if (controller.signal.aborted) sendInstall({ state: 'cancelled' });
       else sendInstall({ state: 'error', message: (err as Error).message });
@@ -223,10 +199,10 @@ export function registerIpc(ctx: IpcContext): void {
   });
   handle('cancelVoiceInstall', () => install?.abort());
   handle('removeVoicePackages', (ids) => {
-    // The engine must not run while its files are deleted.
-    ctx.voice.close();
+    // The engines must not run while their files are deleted.
+    ctx.voicesChanged('removing');
     removePackages(packageIds(ids), ctx.dirs.voices, (line) => ctx.log(`VOICES    ${line}`));
-    ctx.voicesChanged();
+    ctx.voicesChanged('changed');
   });
 
   // --- Hotkeys ---
@@ -253,37 +229,22 @@ export function registerIpc(ctx: IpcContext): void {
   });
   handle('links', () => LINKS);
   handle('openLink', async (id) => {
-    const url = LINKS[asString(id) as LinkId];
+    const url = Object.hasOwn(LINKS, asString(id)) ? LINKS[asString(id) as LinkId] : undefined;
     if (url?.startsWith('https://')) await shell.openExternal(url);
   });
   handle('copyText', (id) => {
     const values: Record<CopyId, () => string> = { obsUrl: ctx.obsUrl, loginCode: () => twitch.status.login?.userCode ?? '' };
-    const value = values[asString(id) as CopyId];
+    const value = Object.hasOwn(values, asString(id)) ? values[asString(id) as CopyId] : undefined;
     const text = value?.();
     if (text) clipboard.writeText(text);
   });
   handle('openFolder', async (kind) => {
     const folders: Record<FolderId, string> = { data: ctx.dataDir, voices: ctx.dirs.voices, logs: ctx.dirs.logs };
-    const folder = folders[asString(kind) as FolderId];
+    const folder = Object.hasOwn(folders, asString(kind)) ? folders[asString(kind) as FolderId] : undefined;
     if (!folder) return;
     await fs.promises.mkdir(folder, { recursive: true });
     await shell.openPath(folder);
   });
-}
-
-function asObject(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
-}
-
-function asString(value: unknown): string {
-  if (typeof value !== 'string' || value.length > 200) throw new Error('Invalid argument');
-  return value;
-}
-
-/** A test message (longer than an id; Twitch allows 500 characters). */
-function asText(value: unknown): string {
-  if (typeof value !== 'string' || value.length > 500) throw new Error('Invalid argument');
-  return value;
 }
 
 /** Only ids from the voice package manifest. */

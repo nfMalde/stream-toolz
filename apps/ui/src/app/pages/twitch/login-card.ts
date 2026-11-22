@@ -1,37 +1,37 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import type { TwitchError } from '@rmc/api';
+import type { TwitchError } from '@stz/api';
 import { I18n, type TextKey } from '../../i18n/i18n';
 import { TwitchStore } from '../../stores/twitch.store';
 import { Icon } from '../../ui/icon';
 
 /** Login with the streamer's app by code: Twitch's page opens with the code filled in; the status follows here. */
 @Component({
-  selector: 'rmc-login-card',
+  selector: 'stz-login-card',
   imports: [Icon],
   template: `
     @let status = twitch.status();
     @let user = status?.user;
     @if (!twitch.hasApp()) {
-      <div class="banner warn"><rmc-icon name="key" />{{ t('login.needApp') }}</div>
+      <div class="banner warn"><stz-icon name="key" />{{ t('login.needApp') }}</div>
     } @else if (status?.stage === 'logging-in') {
       <div class="code-login">
         <div class="code-text">
           <b>{{ t('login.waiting') }}</b>
           <p class="faint small">{{ t('login.waitingHint') }}</p>
-          <p class="faint small scope"><rmc-icon name="shield" [size]="13" /> {{ t('login.scopeHint') }}</p>
+          <p class="faint small scope"><stz-icon name="shield" [size]="13" /> {{ scopeHint() }}</p>
         </div>
         @if (status?.login; as login) {
           <div class="code" [title]="t('login.codeTitle')">{{ login.userCode }}</div>
         }
         <div class="row wrap actions">
-          <button type="button" class="btn sm" (click)="twitch.reopenLogin()"><rmc-icon name="external" [size]="14" />{{ t('login.reopen') }}</button>
-          <button type="button" class="btn sm" (click)="copy()"><rmc-icon [name]="copied() ? 'check' : 'copy'" [size]="14" />{{ copied() ? t('common.copied') : t('login.copyCode') }}</button>
+          <button type="button" class="btn sm" (click)="twitch.reopenLogin()"><stz-icon name="external" [size]="14" />{{ t('login.reopen') }}</button>
+          <button type="button" class="btn sm" (click)="copy()"><stz-icon [name]="copied() ? 'check' : 'copy'" [size]="14" />{{ copied() ? t('common.copied') : t('login.copyCode') }}</button>
           <button type="button" class="btn sm ghost" (click)="twitch.cancelLogin()">{{ t('common.cancel') }}</button>
         </div>
       </div>
     } @else if (twitch.loggedIn() && user) {
       <div class="row wrap">
-        <div class="card-icon" [class.ok]="twitch.connected()"><rmc-icon name="user" /></div>
+        <div class="card-icon" [class.ok]="twitch.connected()"><stz-icon name="user" /></div>
         <div class="spacer">
           <b>{{ t('login.as', { name: user.name }) }}</b>
           <div class="faint small">
@@ -48,12 +48,12 @@ import { Icon } from '../../ui/icon';
     } @else {
       <div class="row wrap">
         <p class="muted spacer">{{ t('login.intro') }}</p>
-        <button type="button" class="btn primary" (click)="twitch.login()"><rmc-icon name="plug" [size]="16" />{{ t('login.button') }}</button>
+        <button type="button" class="btn primary" (click)="twitch.login()"><stz-icon name="plug" [size]="16" />{{ t('login.button') }}</button>
       </div>
     }
     @if (error(); as key) {
       <div class="banner danger error">
-        <rmc-icon name="alert" />
+        <stz-icon name="alert" />
         <div>
           {{ t(key) }}
           @if (status?.message) { <div class="small faint mono selectable">{{ status?.message }}</div> }
@@ -85,6 +85,12 @@ export class LoginCard {
     this.copied.set(true);
     setTimeout(() => this.copied.set(false), 2000);
   }
+
+  /** The permissions this login asks for, as Twitch will list them. */
+  protected readonly scopeHint = computed(() => {
+    const features = this.twitch.status()?.asks ?? [];
+    return this.t('login.scopeHint', { list: features.map((feature) => this.t(`login.feature.${feature}` as TextKey)).join(', ') });
+  });
 
   protected readonly error = computed<TextKey | undefined>(() => {
     const error: TwitchError | undefined = this.twitch.status()?.error;

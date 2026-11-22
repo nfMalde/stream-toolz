@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
-import type { AppConfig, AppInfo, Settings } from '@rmc/api';
-import { BRIDGE_AVAILABLE, RMC } from '../core/rmc';
+import type { AppConfig, AppInfo, AppSettings, ModuleState } from '@stz/api';
+import { BRIDGE_AVAILABLE, STZ } from '../core/stz';
 
 interface SettingsState {
   config: AppConfig | null;
@@ -13,24 +13,31 @@ interface SettingsState {
   error: string | null;
 }
 
-/** App configuration and settings; changes are applied right away and saved by the main process. */
+/**
+ * The app's configuration: its own settings and which modules are on (each module keeps its settings in its own
+ * store). Changes are applied right away and saved by the main process.
+ */
 export const SettingsStore = signalStore(
   { providedIn: 'root' },
   withState<SettingsState>({ config: null, info: null, guideOpen: false, guideStep: null, error: null }),
   withComputed(({ config }) => ({
     loaded: computed(() => config() !== null),
-    settings: computed(() => config()?.settings ?? null),
-    language: computed(() => config()?.settings.language ?? (navigator.language.startsWith('de') ? 'de' : 'en')),
+    settings: computed(() => config()?.app ?? null),
+    language: computed(() => config()?.app.language ?? (navigator.language.startsWith('de') ? 'de' : 'en')),
+    modules: computed<Record<string, ModuleState>>(() => config()?.modules ?? {}),
   })),
-  withMethods((store, rmc = inject(RMC)) => {
+  withMethods((store, stz = inject(STZ)) => {
+    let markLoaded = () => {};
+    const loaded = new Promise<void>((resolve) => (markLoaded = resolve));
+
     /** Optimistic: the UI shows the change at once, the main process returns the validated settings. */
-    async function update(change: Partial<Settings>): Promise<void> {
+    async function update(change: Partial<AppSettings>): Promise<void> {
       const config = store.config();
       if (!config) return;
-      patchState(store, { config: { ...config, settings: { ...config.settings, ...change } }, error: null });
+      patchState(store, { config: { ...config, app: { ...config.app, ...change } }, error: null });
       try {
-        const settings = await rmc.setSettings(change);
-        patchState(store, { config: { ...store.config()!, settings } });
+        const app = await stz.setAppSettings(change);
+        patchState(store, { config: { ...store.config()!, app } });
       } catch (err) {
         patchState(store, { config, error: (err as Error).message });
       }
@@ -40,16 +47,33 @@ export const SettingsStore = signalStore(
       const config = store.config();
       if (!config || config.guideDone) return;
       patchState(store, { config: { ...config, guideDone: true } });
-      await rmc.setGuideDone(true);
+      await stz.setGuideDone(true);
     }
 
     return {
       update,
 
+      /** Resolves once the configuration has arrived (the route guards wait for it). */
+      whenLoaded: (): Promise<void> => loaded,
+
+      /** A module is on (false while the configuration is not loaded yet). */
+      moduleEnabled(id: string): boolean {
+        return store.modules()[id]?.enabled ?? false;
+      },
+
+      async setModuleEnabled(id: string, enabled: boolean): Promise<void> {
+        const config = store.config();
+        if (!config) return;
+        patchState(store, { config: { ...config, modules: { ...config.modules, [id]: { enabled } } } });
+        const modules = await stz.setModuleEnabled(id, enabled);
+        patchState(store, { config: { ...store.config()!, modules } });
+      },
+
       async load(): Promise<void> {
-        const [config, info] = await Promise.all([rmc.getConfig(), rmc.info()]);
+        const [config, info] = await Promise.all([stz.getConfig(), stz.info()]);
         // First start: the setup assistant opens by itself.
         patchState(store, { config, info, guideOpen: !config.guideDone });
+        markLoaded();
       },
 
       openGuide(step: string | null = null): void {
@@ -62,20 +86,26 @@ export const SettingsStore = signalStore(
       },
     };
   }),
-  withHooks((store, rmc = inject(RMC)) => {
-    let unsubscribe = () => {};
+  withHooks((store, stz = inject(STZ)) => {
+    const unsubscribe: (() => void)[] = [];
     return {
       onInit() {
         if (!BRIDGE_AVAILABLE) return;
-        // Changes the app makes itself (a learned reward) or from another place in the UI.
-        unsubscribe = rmc.onSettings((settings) => {
-          const config = store.config();
-          if (config) patchState(store, { config: { ...config, settings } });
-        });
+        // Changes from another place in the UI, or a module switched on or off elsewhere.
+        unsubscribe.push(
+          stz.onAppSettings((app) => {
+            const config = store.config();
+            if (config) patchState(store, { config: { ...config, app } });
+          }),
+          stz.onModules((modules) => {
+            const config = store.config();
+            if (config) patchState(store, { config: { ...config, modules } });
+          }),
+        );
         void store.load();
       },
       onDestroy() {
-        unsubscribe();
+        for (const off of unsubscribe) off();
       },
     };
   }),

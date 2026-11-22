@@ -8,7 +8,7 @@ import { LoginCard } from './login-card';
 
 /** Twitch: the user's own app, the login and the channel to read. */
 @Component({
-  selector: 'rmc-twitch',
+  selector: 'stz-twitch',
   imports: [Icon, AppForm, LoginCard, ChannelField],
   template: `
     <div class="page">
@@ -22,25 +22,25 @@ import { LoginCard } from './login-card';
 
       <section class="card">
         <div class="card-header">
-          <div class="card-icon accent"><rmc-icon name="plug" /></div>
+          <div class="card-icon accent"><stz-icon name="plug" /></div>
           <h2>{{ t('twitch.login') }}</h2>
         </div>
-        <rmc-login-card />
+        <stz-login-card />
         @if (twitch.hasApp()) {
           <div class="divider"></div>
-          <rmc-channel-field />
+          <stz-channel-field />
         }
       </section>
 
       <section class="card">
         <div class="card-header">
-          <div class="card-icon accent"><rmc-icon name="key" /></div>
+          <div class="card-icon accent"><stz-icon name="key" /></div>
           <div>
             <h2>{{ t('twitch.app') }}</h2>
             <p class="faint small">{{ t('twitch.appHint') }}</p>
           </div>
         </div>
-        <rmc-app-form />
+        <stz-app-form />
       </section>
     </div>
   `,

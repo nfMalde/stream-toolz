@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/nfMalde/stream-toolz/tree/main/docs
+    about: How Stream Toolz works, module by module, and what it does with your data.
+  - name: Security issue
+    url: https://github.com/nfMalde/stream-toolz/security/advisories/new
+    about: Please report security issues privately, not as a public issue.

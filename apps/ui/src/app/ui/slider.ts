@@ -2,7 +2,7 @@ import { Component, computed, input, linkedSignal, output } from '@angular/core'
 
 /** Range slider with a filled track and its value next to it; emits when released. */
 @Component({
-  selector: 'rmc-slider',
+  selector: 'stz-slider',
   template: `
     <input type="range" [min]="min()" [max]="max()" [step]="step()" [value]="current()" [attr.aria-label]="label()"
            [style.--fill]="fill()" (input)="onInput($event)" (change)="onChange($event)" />

@@ -1,26 +1,29 @@
 {
   "name": "stream-toolz",
-  "version": "0.0.1-alpha",
+  "version": "0.1.0-beta",
   "license": "UNLICENSED",
   "private": true,
   "description": "Stream Toolz by Maldö – tools for streamers, fully local. First module: ReadMyChat reads the Twitch chat aloud",
   "type": "module",
   "workspaces": [
     "packages/*",
+    "modules/*",
     "apps/*"
   ],
   "scripts": {
     "dev": "node apps/desktop/scripts/dev.mjs",
     "build:app": "npm run build -w @stream-toolz/ui && npm run build -w @stream-toolz/desktop",
     "app": "npm run build:app && electron apps/desktop",
-    "test": "node --import tsx --test packages/runtime/test/*.test.ts apps/desktop/test/*.test.ts",
-    "typecheck": "tsc"
+    "test": "node --import tsx --test --test-timeout=60000 packages/*/test/*.test.ts modules/*/test/*.test.ts apps/desktop/test/*.test.ts",
+    "typecheck": "tsc",
+    "release": "node scripts/release/release.mjs"
   },
   "engines": {
     "node": ">=22.22.3"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
+    "electron-builder": "26.17.0",
     "tsx": "4.23.15",
     "typescript": "7.0.2"
   }

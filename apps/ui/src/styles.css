@@ -480,12 +480,12 @@ code,
 }
 
 /* Streamer mode: the content of a hidden input shows as dots (ui/secret.ts). */
-rmc-secret-field.masked input {
+stz-secret-field.masked input {
   -webkit-text-security: disc;
 }
 
 /* The wrapped input fills the field. */
-rmc-secret-field > input.input {
+stz-secret-field > input.input {
   flex: 1;
   min-width: 0;
 }

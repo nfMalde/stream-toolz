@@ -1,0 +1,89 @@
+name: Bug report
+description: Something does not work as it should. Please attach the log.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping! Stream Toolz is a hobby project in beta, and your report helps a lot.
+
+        **The log is needed.** Without it the bug can hardly be found:
+        1. In Stream Toolz open **Settings** and click **Logs** (the folder opens).
+        2. Make the bug happen again (the message, the alert, the page …).
+        3. Drag the newest `.log` file into the **Log** field below. It holds no chat messages, viewer names, tokens or keys.
+  - type: input
+    id: version
+    attributes:
+      label: Stream Toolz version
+      description: Shown under About.
+      placeholder: 0.1.0-beta
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: System
+      options:
+        - Windows 11
+        - Windows 10
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where does it happen?
+      options:
+        - Twitch login or connection
+        - ReadMyChat (reading the chat)
+        - Voices (installing, sound)
+        - OBS browser source or audio device
+        - Countdown
+        - Chat Overlay
+        - Alerts
+        - Channel Points
+        - Chat Bot
+        - Installing
+        - Somewhere else in the app
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you see or hear? Screenshots help.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can it be made to happen again?
+      placeholder: |
+        1. Switched Alerts on
+        2. Pressed Test for "Raid"
+        3. The overlay showed …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Log
+      description: Drag the newest file from the Logs folder here.
+      placeholder: Drop the .log file here.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you send it
+      options:
+        - label: The log file is attached and holds nothing I do not want public (it should not, see docs/03-security.md).
+          required: true
+        - label: I looked through the open issues, and this one is not there yet.
+          required: true

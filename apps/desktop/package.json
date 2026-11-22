@@ -1,6 +1,6 @@
 {
   "name": "@stream-toolz/desktop",
-  "version": "0.0.1-alpha",
+  "version": "0.1.0-beta",
   "license": "UNLICENSED",
   "private": true,
   "description": "Stream Toolz desktop app (Electron main process and preloads)",
@@ -10,10 +10,18 @@
     "start": "electron ."
   },
   "dependencies": {
-    "@stream-toolz/runtime": "*"
+    "@stream-toolz/core": "*",
+    "@stream-toolz/readmychat": "*",
+    "@stream-toolz/countdown": "*",
+    "@stream-toolz/chatoverlay": "*",
+    "@stream-toolz/alerts": "*",
+    "@stream-toolz/channelpoints": "*",
+    "@stream-toolz/bot": "*",
+    "@stream-toolz/speech": "*",
+    "@stream-toolz/twitch": "*"
   },
   "devDependencies": {
-    "electron": "43.7.7",
+    "electron": "43.8.4",
     "esbuild": "0.28.2"
   }
 }

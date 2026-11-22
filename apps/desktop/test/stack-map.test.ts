@@ -8,7 +8,7 @@ import { scrub } from '../src/logger';
 import { mapStack } from '../src/stack-map';
 
 test('a frame in a minified bundle is mapped back to the TypeScript line', async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rmc-map-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'stz-map-'));
   try {
     const source = ['export function greet(name: string): string {', '  if (!name) {', "    throw new Error('no name');", '  }', '  return `hi ${name}`;', '}', ''].join('\n');
     await build({
@@ -24,11 +24,11 @@ test('a frame in a minified bundle is mapped back to the TypeScript line', async
     const lines = code.split('\n');
     const line = lines.findIndex((l) => l.includes('throw'));
     const column = lines[line]!.indexOf('throw');
-    const stack = `Error: no name\n    at greet (app://rmc/main-AB12.js:${line + 1}:${column + 1})\n    at other (app://rmc/unknown.js:1:5)`;
+    const stack = `Error: no name\n    at greet (app://stz/main-AB12.js:${line + 1}:${column + 1})\n    at other (app://stz/unknown.js:1:5)`;
     const mapped = mapStack(stack, dir);
     assert.match(mapped, /at greet \(src\/app\/greet\.ts:3:\d+\)/);
     // Without a map the frame stays as it is.
-    assert.match(mapped, /app:\/\/rmc\/unknown\.js:1:5/);
+    assert.match(mapped, /app:\/\/stz\/unknown\.js:1:5/);
     // The dev server (no UI folder): nothing to map.
     assert.equal(mapStack(stack, undefined), stack);
   } finally {

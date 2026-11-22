@@ -5,13 +5,13 @@ import { Icon } from './icon';
 
 /** A value that streamer mode hides (the OBS address, a Client ID): dots, a click shows it after a warning. */
 @Component({
-  selector: 'rmc-secret',
+  selector: 'stz-secret',
   imports: [Icon],
   template: `
     @if (reveal.hidden()) {
       <button type="button" class="masked focusable" [title]="t('streamer.hidden')" [attr.aria-label]="t('streamer.hidden')"
               (click)="$event.stopPropagation(); $event.preventDefault(); reveal.show()">
-        <rmc-icon name="eyeOff" [size]="12" /><span>•••••</span>
+        <stz-icon name="eyeOff" [size]="12" /><span>•••••</span>
       </button>
     } @else {
       <span [class.revealed]="reveal.revealed()" [title]="reveal.revealed() ? t('streamer.hide') : ''"
@@ -37,10 +37,10 @@ export class Secret {
 
 /**
  * An input whose content streamer mode hides (the Client ID): wraps the input, shows dots
- * while typing, and an eye button that shows it after a warning (styles.css: rmc-secret-field.masked input).
+ * while typing, and an eye button that shows it after a warning (styles.css: stz-secret-field.masked input).
  */
 @Component({
-  selector: 'rmc-secret-field',
+  selector: 'stz-secret-field',
   imports: [Icon],
   host: { '[class.masked]': 'reveal.hidden()' },
   template: `
@@ -48,7 +48,7 @@ export class Secret {
     @if (streamer.enabled()) {
       <button type="button" class="btn ghost icon-only eye focusable" [title]="reveal.hidden() ? t('streamer.hidden') : t('streamer.hide')"
               [attr.aria-label]="reveal.hidden() ? t('streamer.hidden') : t('streamer.hide')" (click)="reveal.toggle()">
-        <rmc-icon [name]="reveal.hidden() ? 'eye' : 'eyeOff'" [size]="16" />
+        <stz-icon [name]="reveal.hidden() ? 'eye' : 'eyeOff'" [size]="16" />
       </button>
     }
   `,
@@ -65,21 +65,21 @@ export class SecretField {
 
 /** The warning before a hidden value is shown (one for the whole app, see StreamerMode.confirm). */
 @Component({
-  selector: 'rmc-reveal-dialog',
+  selector: 'stz-reveal-dialog',
   imports: [Icon],
   template: `
     @if (streamer.asking(); as answer) {
       <div class="backdrop" (click)="answer(false)"></div>
       <section class="dialog" role="alertdialog" aria-modal="true" [attr.aria-label]="t('streamer.confirmTitle')">
         <div class="head">
-          <div class="card-icon accent"><rmc-icon name="eye" /></div>
+          <div class="card-icon accent"><stz-icon name="eye" /></div>
           <h2>{{ t('streamer.confirmTitle') }}</h2>
         </div>
         <p class="muted">{{ t('streamer.confirmText', { s: seconds }) }}</p>
         <div class="foot">
           <button type="button" class="btn ghost" (click)="answer(false)">{{ t('common.cancel') }}</button>
           <span class="spacer"></span>
-          <button type="button" class="btn primary" (click)="answer(true)"><rmc-icon name="eye" [size]="16" />{{ t('streamer.confirmShow') }}</button>
+          <button type="button" class="btn primary" (click)="answer(true)"><stz-icon name="eye" [size]="16" />{{ t('streamer.confirmShow') }}</button>
         </div>
       </section>
     }

@@ -1,0 +1,12 @@
+{
+  "name": "@stream-toolz/speech",
+  "version": "0.1.0-beta",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "description": "Stream Toolz speech: Piper, Windows voices, optional voice packages (sherpa-onnx code kept for later); no Electron",
+  "exports": {
+    ".": "./src/index.ts",
+    "./api": "./src/api.ts"
+  }
+}

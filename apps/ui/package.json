@@ -1,6 +1,6 @@
 {
   "name": "@stream-toolz/ui",
-  "version": "0.0.1-alpha",
+  "version": "0.1.0-beta",
   "license": "UNLICENSED",
   "private": true,
   "description": "Stream Toolz user interface (Angular, zoneless, signals)",
@@ -20,8 +20,8 @@
     "tslib": "2.8.1"
   },
   "devDependencies": {
-    "@angular/build": "22.2.1",
-    "@angular/cli": "22.2.1",
+    "@angular/build": "22.2.5",
+    "@angular/cli": "22.2.5",
     "@angular/compiler-cli": "22.2.1",
     "typescript": "6.0.3"
   }

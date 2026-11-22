@@ -1,43 +1,37 @@
+import { NgComponentOutlet } from '@angular/common';
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
-import type { ChatLanguage } from '@rmc/api';
-import { I18n, type TextKey } from '../../i18n/i18n';
-import { ReaderStore } from '../../stores/reader.store';
+import type { GuideCheck, GuideStep } from '../../core/module-ui';
+import { I18n } from '../../i18n/i18n';
+import { MODULE_UIS } from '../../modules';
 import { SettingsStore } from '../../stores/settings.store';
 import { TwitchStore } from '../../stores/twitch.store';
-import { VoicesStore } from '../../stores/voices.store';
-import { Icon, type IconName } from '../../ui/icon';
+import { Icon } from '../../ui/icon';
 import { Segmented, type SegmentOption } from '../../ui/segmented';
-import { OutputSetup } from '../output/output-setup';
 import { AppForm } from '../twitch/app-form';
 import { ChannelField } from '../twitch/channel-field';
 import { LoginCard } from '../twitch/login-card';
-import { VoicePackages } from '../voices/voice-packages';
-import { VoicePicker } from '../voices/voice-picker';
 
-type StepId = 'welcome' | 'app' | 'login' | 'voice' | 'output' | 'done';
+/** The shell's steps; the modules that are on add theirs between login and done (core/module-ui.ts). */
+type Step = Omit<GuideStep, 'component'> & Partial<Pick<GuideStep, 'component'>>;
 
-const STEPS: { id: StepId; title: TextKey; icon: IconName }[] = [
-  { id: 'welcome', title: 'guide.welcome', icon: 'sparkle' },
-  { id: 'app', title: 'guide.app', icon: 'key' },
-  { id: 'login', title: 'guide.login', icon: 'plug' },
-  { id: 'voice', title: 'guide.voice', icon: 'mic' },
-  { id: 'output', title: 'guide.output', icon: 'broadcast' },
-  { id: 'done', title: 'guide.done', icon: 'check' },
-];
+const WELCOME: Step = { id: 'welcome', title: 'guide.welcome', icon: 'sparkle' };
+const APP: Step = { id: 'app', title: 'guide.app', icon: 'key' };
+const LOGIN: Step = { id: 'login', title: 'guide.login', icon: 'plug' };
+const DONE: Step = { id: 'done', title: 'guide.done', icon: 'check' };
 
 /** The setup assistant: opens by itself at first start, and from the navigation. Every step can be skipped. */
 @Component({
-  selector: 'rmc-guide',
-  imports: [Icon, Segmented, AppForm, LoginCard, ChannelField, VoicePackages, VoicePicker, OutputSetup],
+  selector: 'stz-guide',
+  imports: [NgComponentOutlet, Icon, Segmented, AppForm, LoginCard, ChannelField],
   template: `
     <div class="backdrop"></div>
     <section class="guide" role="dialog" aria-modal="true" [attr.aria-label]="t('guide.title')">
       <aside class="steps-nav">
         <div class="eyebrow">{{ t('guide.title') }}</div>
-        @for (item of steps; track item.id; let i = $index) {
-          <button type="button" class="step focusable" [class.active]="item.id === step()" [class.done]="isDone(item.id)" (click)="step.set(item.id)">
+        @for (item of steps(); track item.id; let i = $index) {
+          <button type="button" class="step focusable" [class.active]="item.id === step()" [class.done]="isDone(item)" (click)="step.set(item.id)">
             <span class="num">
-              @if (isDone(item.id)) { <rmc-icon name="check" [size]="13" [weight]="2.6" /> } @else { {{ i + 1 }} }
+              @if (isDone(item)) { <stz-icon name="check" [size]="13" [weight]="2.6" /> } @else { {{ i + 1 }} }
             </span>
             {{ t(item.title) }}
           </button>
@@ -46,10 +40,10 @@ const STEPS: { id: StepId; title: TextKey; icon: IconName }[] = [
 
       <div class="body">
         <header class="head">
-          <div class="card-icon accent"><rmc-icon [name]="current().icon" /></div>
+          <div class="card-icon accent"><stz-icon [name]="current().icon" /></div>
           <h2>{{ t(current().title) }}</h2>
           <span class="spacer"></span>
-          <button type="button" class="btn ghost icon-only" [title]="t('common.close')" (click)="close()"><rmc-icon name="x" /></button>
+          <button type="button" class="btn ghost icon-only" [title]="t('common.close')" (click)="close()"><stz-icon name="x" /></button>
         </header>
 
         <div class="content">
@@ -63,65 +57,63 @@ const STEPS: { id: StepId; title: TextKey; icon: IconName }[] = [
                 </div>
               </div>
               <ul class="points">
-                <li><rmc-icon name="pc" [size]="16" />{{ t('guide.point.local') }}</li>
-                <li><rmc-icon name="lock" [size]="16" />{{ t('guide.point.encrypted') }}</li>
-                <li><rmc-icon name="shield" [size]="16" />{{ t('guide.point.noTracking') }}</li>
-                <li><rmc-icon name="filter" [size]="16" />{{ t('guide.point.filters') }}</li>
+                <li><stz-icon name="pc" [size]="16" />{{ t('guide.point.local') }}</li>
+                <li><stz-icon name="lock" [size]="16" />{{ t('guide.point.encrypted') }}</li>
+                <li><stz-icon name="shield" [size]="16" />{{ t('guide.point.noTracking') }}</li>
+                <li><stz-icon name="filter" [size]="16" />{{ t('guide.point.filters') }}</li>
               </ul>
               <div class="setting">
                 <div class="text">
                   <div class="title">{{ t('guide.language') }}</div>
                   <div class="hint">{{ t('guide.languageHint') }}</div>
                 </div>
-                <div class="control"><rmc-segmented [options]="languages" [value]="language()" (valueChange)="setLanguage($event)" /></div>
+                <div class="control"><stz-segmented [options]="languages" [value]="language()" (valueChange)="setLanguage($event)" /></div>
               </div>
             }
             @case ('app') {
               <p class="muted intro">{{ t('guide.appText') }}</p>
-              <rmc-app-form />
+              <stz-app-form />
             }
             @case ('login') {
               <p class="muted intro">{{ t('guide.loginText') }}</p>
-              <rmc-login-card />
+              <stz-login-card />
               @if (twitch.hasApp()) {
                 <div class="divider"></div>
-                <rmc-channel-field />
+                <stz-channel-field />
               }
-            }
-            @case ('voice') {
-              <p class="muted intro">{{ t('guide.voiceText') }}</p>
-              <rmc-voice-packages [compact]="true" />
-              <div class="divider"></div>
-              <rmc-voice-picker [language]="mainLanguage()" />
-              <p class="faint small other">{{ t('guide.voiceOther') }}</p>
-            }
-            @case ('output') {
-              <p class="muted intro">{{ t('guide.outputText') }}</p>
-              <rmc-output-setup [compact]="true" />
             }
             @case ('done') {
               <p class="lead">{{ t('guide.doneText') }}</p>
               <ul class="checks">
-                <li [class.ok]="twitch.connected()"><rmc-icon [name]="twitch.connected() ? 'check' : 'alert'" [size]="16" />{{ t(twitch.connected() ? 'guide.check.twitch' : 'guide.check.noTwitch') }}</li>
-                <li [class.ok]="voices.hasInstalledVoice()"><rmc-icon [name]="voices.hasInstalledVoice() ? 'check' : 'alert'" [size]="16" />{{ t(voices.hasInstalledVoice() ? 'guide.check.voice' : 'guide.check.noVoice') }}</li>
+                @for (check of checks(); track check.label) {
+                  <li [class.ok]="check.ok"><stz-icon [name]="check.ok ? 'check' : 'alert'" [size]="16" />{{ t(check.label) }}</li>
+                }
               </ul>
-              <div class="row">
-                <button type="button" class="btn" [disabled]="tested()" (click)="test()"><rmc-icon name="send" [size]="15" />{{ t('guide.testMessage') }}</button>
-                <span class="faint small">{{ t('guide.testHint') }}</span>
-              </div>
+              @for (test of tests(); track test.label) {
+                <div class="row">
+                  <button type="button" class="btn" [disabled]="tested()" (click)="runTest(test.run)"><stz-icon name="send" [size]="15" />{{ t(test.label) }}</button>
+                  <span class="faint small">{{ t(test.hint) }}</span>
+                </div>
+              }
+            }
+            @default {
+              <!-- A module's step. -->
+              @if (current().component; as component) {
+                <ng-container *ngComponentOutlet="component" />
+              }
             }
           }
         </div>
 
         <footer class="foot">
           @if (index() > 0) {
-            <button type="button" class="btn ghost" (click)="go(-1)"><rmc-icon name="chevronLeft" [size]="16" />{{ t('common.back') }}</button>
+            <button type="button" class="btn ghost" (click)="go(-1)"><stz-icon name="chevronLeft" [size]="16" />{{ t('common.back') }}</button>
           }
           <span class="spacer"></span>
           @if (step() === 'done') {
             <button type="button" class="btn primary" (click)="close()">{{ t('guide.finish') }}</button>
           } @else {
-            <button type="button" class="btn primary" (click)="go(1)">{{ t('common.next') }}<rmc-icon name="chevronRight" [size]="16" /></button>
+            <button type="button" class="btn primary" (click)="go(1)">{{ t('common.next') }}<stz-icon name="chevronRight" [size]="16" /></button>
           }
         </footer>
       </div>
@@ -154,11 +146,10 @@ const STEPS: { id: StepId; title: TextKey; icon: IconName }[] = [
     .hello { display: flex; align-items: center; gap: 20px; }
     .hello img { flex: none; filter: drop-shadow(0 10px 22px rgba(0, 0, 0, .5)); }
     .by { margin-top: 6px; }
-    .other { margin-top: 10px; }
     .intro { max-width: 680px; margin-bottom: 16px; }
     .points, .checks { list-style: none; padding: 0; margin: 18px 0; display: flex; flex-direction: column; gap: 10px; }
     .points li, .checks li { display: flex; align-items: center; gap: 10px; }
-    .points rmc-icon { color: var(--accent); }
+    .points stz-icon { color: var(--accent); }
     .checks li { color: var(--warn); }
     .checks li.ok { color: var(--ok); }
   `,
@@ -166,48 +157,58 @@ const STEPS: { id: StepId; title: TextKey; icon: IconName }[] = [
 export class Guide {
   private readonly settings = inject(SettingsStore);
   protected readonly twitch = inject(TwitchStore);
-  protected readonly voices = inject(VoicesStore);
-  private readonly reader = inject(ReaderStore);
   protected readonly t = inject(I18n).t;
 
-  protected readonly steps = STEPS;
-  protected readonly step = linkedSignal<StepId>(() => (STEPS.some((s) => s.id === this.settings.guideStep()) ? (this.settings.guideStep() as StepId) : 'welcome'));
-  protected readonly index = computed(() => STEPS.findIndex((s) => s.id === this.step()));
-  protected readonly current = computed(() => STEPS[this.index()]!);
+  /** Every module's part, created once here (its injection context); shown only while the module is on. */
+  private readonly moduleGuides = MODULE_UIS.map((module) => ({ id: module.id, guide: module.guide?.() }));
+  private readonly guides = computed(() =>
+    this.moduleGuides.filter((m) => this.settings.moduleEnabled(m.id)).flatMap((m) => (m.guide ? [m.guide] : [])),
+  );
+
+  protected readonly steps = computed<Step[]>(() => [WELCOME, APP, LOGIN, ...this.guides().flatMap((guide) => guide.steps), DONE]);
+  protected readonly step = linkedSignal<string>(() => {
+    const wanted = this.settings.guideStep();
+    return this.steps().some((s) => s.id === wanted) ? wanted! : WELCOME.id;
+  });
+  protected readonly index = computed(() => Math.max(0, this.steps().findIndex((s) => s.id === this.step())));
+  protected readonly current = computed(() => this.steps()[this.index()]!);
+  protected readonly checks = computed<GuideCheck[]>(() => [
+    { ok: this.twitch.connected(), label: this.twitch.connected() ? 'guide.check.twitch' : 'guide.check.noTwitch' },
+    ...this.guides().flatMap((guide) => guide.checks?.() ?? []),
+  ]);
+  protected readonly tests = computed(() => this.guides().flatMap((guide) => (guide.test ? [guide.test] : [])));
   protected readonly language = computed(() => this.settings.language());
-  protected readonly mainLanguage = computed<ChatLanguage>(() => ((this.settings.settings()?.speechLanguage ?? 'de').startsWith('de') ? 'de' : 'en'));
   protected readonly tested = signal(false);
   protected readonly languages: SegmentOption<string>[] = [
     { value: 'de', label: 'Deutsch' },
     { value: 'en', label: 'English' },
   ];
 
-  protected isDone(id: StepId): boolean {
-    switch (id) {
-      case 'app':
+  protected isDone(step: Step): boolean {
+    switch (step.id) {
+      case APP.id:
         return this.twitch.hasApp();
-      case 'login':
+      case LOGIN.id:
         return this.twitch.connected();
-      case 'voice':
-        return this.voices.hasInstalledVoice();
       default:
-        return false;
+        return step.done?.() ?? false;
     }
   }
 
-  /** App and chat language together; both can be changed separately later. */
+  /** The app's language; the modules may follow it (ReadMyChat: the chat's language). All can be changed later. */
   protected setLanguage(language: string): void {
-    void this.settings.update({ language, speechLanguage: language === 'de' ? 'de-DE' : 'en-US' });
+    void this.settings.update({ language });
+    for (const guide of this.guides()) guide.languageChosen?.(language);
   }
 
   protected go(delta: number): void {
-    const next = STEPS[this.index() + delta];
+    const next = this.steps()[this.index() + delta];
     if (next) this.step.set(next.id);
   }
 
-  protected test(): void {
+  protected runTest(run: () => void): void {
     this.tested.set(true);
-    void this.reader.test(this.t('guide.testText'));
+    run();
     setTimeout(() => this.tested.set(false), 3000);
   }
 

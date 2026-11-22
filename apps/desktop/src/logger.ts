@@ -46,7 +46,9 @@ export function scrub(text: string): string {
     .replace(/\b(Bearer|OAuth)\s+[\w.~+/-]+=*/gi, '$1 ***')
     .replace(/\b(access_token|refresh_token|client_secret|device_code|code|token|state)=[^&\s"']+/gi, '$1=***')
     .replace(/("(?:access_token|refresh_token|client_secret|clientSecret|accessToken|refreshToken|device_code|deviceCode)"\s*:\s*")[^"]*"/gi, '$1***"')
-    .replace(/\/obs\/[\w-]{8,}/g, '/obs/***');
+    .replace(/\/obs\/[\w-]{8,}/g, '/obs/***')
+    // A bare token (Twitch's are 30 lower-case letters and digits; logins are at most 25) in any other place.
+    .replace(/(?<![\w-])[a-z0-9]{30,}(?![\w-])/g, '***');
 }
 
 /** An error (or anything thrown) as text: its stack if it has one. */

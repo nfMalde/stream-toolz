@@ -2,7 +2,7 @@ import { Component, input, model } from '@angular/core';
 
 /** On/off switch. */
 @Component({
-  selector: 'rmc-toggle',
+  selector: 'stz-toggle',
   template: `
     <button type="button" role="switch" class="switch focusable" [class.on]="checked()" [attr.aria-checked]="checked()"
             [attr.aria-label]="label()" [disabled]="disabled()" (click)="checked.set(!checked())">

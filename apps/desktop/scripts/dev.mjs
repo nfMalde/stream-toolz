@@ -22,7 +22,7 @@ if (!fs.existsSync(electronExe)) {
   process.exit(1);
 }
 
-const env = { ...process.env, NG_CLI_ANALYTICS: 'false', RMC_DEV_URL: DEV_URL };
+const env = { ...process.env, NG_CLI_ANALYTICS: 'false', STZ_DEV_URL: DEV_URL };
 // Set by VS Code for its extension processes; with it, Electron would start as plain Node.
 delete env.ELECTRON_RUN_AS_NODE;
 

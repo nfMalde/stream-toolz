@@ -19,6 +19,9 @@
   "include": [
     "packages/*/src",
     "packages/*/test",
+    "modules/*/src",
+    "modules/*/main",
+    "modules/*/test",
     "apps/desktop/src",
     "apps/desktop/test"
   ]

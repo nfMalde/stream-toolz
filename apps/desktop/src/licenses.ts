@@ -3,7 +3,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import type { LicenseEntry } from '@stream-toolz/runtime';
+import type { LicenseEntry } from '@stream-toolz/core';
 
 interface CollectedTexts {
   texts: Record<string, string>;
@@ -33,27 +33,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 `;
 
-/** The M-AILABS Speech Dataset license (Piper voices Ramona and Eva K are trained on it). */
-const BSD3 = (copyright: string) => `${copyright}
-
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
-following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following
-   disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
-   following disclaimer in the documentation and/or other materials provided with the distribution.
-3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote
-   products derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-`;
 
 const M_AILABS = `Copyright (c) 2017-2019 by the original creators @ M-AILABS with the following license:
 
@@ -105,17 +84,6 @@ export function licenseEntries(): LicenseEntry[] {
       shipped: 'download',
       notice: 'public-domain-voices',
     },
-    {
-      name: 'CSS10 German VITS (Neon)',
-      license: 'BSD-3-Clause',
-      usedFor: 'voice',
-      url: 'https://huggingface.co/neongeckocom/tts-vits-css10-de',
-      shipped: 'download',
-      notice: 'css10',
-      text: BSD3('Copyright (c) Neongecko.com Inc.'),
-    },
-    { name: 'sherpa-onnx', version: '1.13.8', license: 'Apache-2.0', usedFor: 'voice', url: 'https://github.com/k2-fsa/sherpa-onnx', shipped: 'download', text: apache },
-    { name: 'Kokoro-82M', version: 'v1.0', license: 'Apache-2.0', usedFor: 'voice', url: 'https://huggingface.co/hexgrad/Kokoro-82M', shipped: 'download', notice: 'kokoro', text: apache },
     { name: 'onnxruntime', license: 'MIT', usedFor: 'voice-engine', url: 'https://github.com/microsoft/onnxruntime', shipped: 'download', text: MIT('Copyright (c) Microsoft Corporation') },
     { name: 'espeak-ng', license: 'GPL-3.0-or-later', usedFor: 'voice-engine', url: 'https://github.com/espeak-ng/espeak-ng', shipped: 'download', notice: 'gpl' },
     {
@@ -136,7 +104,6 @@ export function licenseEntries(): LicenseEntry[] {
       notice: 'piper-part',
       text: MIT('Copyright (c) 2023 Musharraf'),
     },
-    { name: 'cppjieba dictionary', license: 'MIT', usedFor: 'voice-engine', url: 'https://github.com/yanyiwu/cppjieba', shipped: 'download', notice: 'kokoro-part', text: MIT('Copyright (c) 2013') },
   ];
 }
 
