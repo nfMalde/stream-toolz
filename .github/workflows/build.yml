@@ -31,6 +31,10 @@ jobs:
         with:
           node-version: 22.23.2
           package-manager-cache: false
+      # The runner's npm 10.9.8 fails the signature check now and then ("pkijs@3.4.3 has attestations but no
+      # corresponding public key(s)", four Windows builds on 2026-11-22, also after three tries), npm 11 does not:
+      # an exact npm 11, at least 14 days old when pinned, for the whole job (also inside scripts/release).
+      - run: npm install -g npm@11.21.2
       # .npmrc: no install scripts, exact versions from the lockfile.
       - run: npm ci
       # The registry's signing keys are fetched for this check; now and then they are missing for a moment
