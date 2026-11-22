@@ -1,4 +1,5 @@
-/* Angular 22 defaults, plus strict mode and the shared IPC contract (@rmc/api). */
+/* Angular 22 defaults, plus strict mode, the shared IPC contract (@stz/api, apps/desktop/src/bridge-api.ts), and the
+   modules' UI (modules/<id>/ui), which imports the shell's parts as @shell/…. */
 {
   "compileOnSave": false,
   "compilerOptions": {
@@ -15,7 +16,23 @@
     "target": "ES2022",
     "module": "preserve",
     "paths": {
-      "@rmc/api": ["../../packages/runtime/src/app-api.ts"]
+      "@stz/api": ["../desktop/src/bridge-api.ts"],
+      "@shell/*": ["./src/app/*"],
+      "@stream-toolz/readmychat/ui/*": ["../../modules/readmychat/ui/*"],
+      "@stream-toolz/countdown/ui/*": ["../../modules/countdown/ui/*"],
+      "@stream-toolz/chatoverlay/ui/*": ["../../modules/chatoverlay/ui/*"],
+      "@stream-toolz/alerts/ui/*": ["../../modules/alerts/ui/*"],
+      "@stream-toolz/channelpoints/ui/*": ["../../modules/channelpoints/ui/*"],
+      "@stream-toolz/bot/ui/*": ["../../modules/bot/ui/*"],
+      "@stream-toolz/core/*": ["../../packages/core/src/*"],
+      "@stream-toolz/twitch/*": ["../../packages/twitch/src/*"],
+      "@stream-toolz/speech/*": ["../../packages/speech/src/*"],
+      "@stream-toolz/readmychat/*": ["../../modules/readmychat/src/*"],
+      "@stream-toolz/countdown/*": ["../../modules/countdown/src/*"],
+      "@stream-toolz/chatoverlay/*": ["../../modules/chatoverlay/src/*"],
+      "@stream-toolz/alerts/*": ["../../modules/alerts/src/*"],
+      "@stream-toolz/channelpoints/*": ["../../modules/channelpoints/src/*"],
+      "@stream-toolz/bot/*": ["../../modules/bot/src/*"]
     }
   },
   "angularCompilerOptions": {

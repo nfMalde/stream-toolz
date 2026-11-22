@@ -7,7 +7,7 @@ export interface SegmentOption<T> {
 
 /** A row of mutually exclusive options. */
 @Component({
-  selector: 'rmc-segmented',
+  selector: 'stz-segmented',
   template: `
     <div class="segmented" role="radiogroup">
       @for (option of options(); track option.value) {

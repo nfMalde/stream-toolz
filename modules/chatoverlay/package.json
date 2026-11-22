@@ -1,0 +1,18 @@
+{
+  "name": "@stream-toolz/chatoverlay",
+  "version": "0.0.1-alpha",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "description": "Chat Overlay, a Stream Toolz module. src: no Electron; main: the module in the main process, through its host",
+  "exports": {
+    ".": "./src/index.ts",
+    "./api": "./src/api.ts",
+    "./main": "./main/module.ts",
+    "./preload": "./main/preload.ts"
+  },
+  "dependencies": {
+    "@stream-toolz/core": "*",
+    "@stream-toolz/twitch": "*"
+  }
+}

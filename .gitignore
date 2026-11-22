@@ -5,3 +5,5 @@ apps/*/dist/
 # Secrets live in the user profile (apps/desktop/src/main.ts); this only guards against copies.
 secrets.bin
 secrets.bin.tmp
+# Release output (scripts/release): the staged app and the installers.
+/release/

@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
-import { RMC } from '../../core/rmc';
+import { STZ } from '../../core/stz';
 import { I18n, type TextKey } from '../../i18n/i18n';
 import { SettingsStore } from '../../stores/settings.store';
 import { TwitchStore } from '../../stores/twitch.store';
@@ -11,18 +11,18 @@ import { Secret, SecretField } from '../../ui/secret';
  * only its Client ID (a public app has no secret). Twitch checks the ID when it is saved.
  */
 @Component({
-  selector: 'rmc-app-form',
+  selector: 'stz-app-form',
   imports: [Icon, Secret, SecretField],
   template: `
     @if (twitch.hasApp() && !replacing()) {
       <div class="saved">
-        <div class="card-icon ok-icon"><rmc-icon name="key" /></div>
+        <div class="card-icon ok-icon"><stz-icon name="key" /></div>
         <div class="spacer">
           <b>{{ t('app.saved') }}</b>
-          <div class="faint small">{{ t('app.savedHint') }} <rmc-secret [value]="'…' + (twitch.status()?.clientIdHint ?? '')" /></div>
+          <div class="faint small">{{ t('app.savedHint') }} <stz-secret [value]="'…' + (twitch.status()?.clientIdHint ?? '')" /></div>
         </div>
         <button type="button" class="btn sm" (click)="replacing.set(true)">{{ t('app.replace') }}</button>
-        <button type="button" class="btn sm ghost" (click)="remove()"><rmc-icon name="trash" [size]="14" />{{ t('app.remove') }}</button>
+        <button type="button" class="btn sm ghost" (click)="remove()"><stz-icon name="trash" [size]="14" />{{ t('app.remove') }}</button>
       </div>
     } @else {
       @if (showGuide()) {
@@ -31,14 +31,14 @@ import { Secret, SecretField } from '../../ui/secret';
             <div>
               <b>{{ t('app.step.2fa') }}</b>
               <p class="faint small">{{ t('app.step.2faHint') }}</p>
-              <button type="button" class="btn sm" (click)="open('twitchSecurity')"><rmc-icon name="external" [size]="14" />{{ t('app.step.2faLink') }}</button>
+              <button type="button" class="btn sm" (click)="open('twitchSecurity')"><stz-icon name="external" [size]="14" />{{ t('app.step.2faLink') }}</button>
             </div>
           </li>
           <li>
             <div>
               <b>{{ t('app.step.console') }}</b>
               <p class="faint small">{{ t('app.step.consoleHint') }}</p>
-              <button type="button" class="btn sm" (click)="open('twitchConsole')"><rmc-icon name="external" [size]="14" />{{ t('app.step.consoleLink') }}</button>
+              <button type="button" class="btn sm" (click)="open('twitchConsole')"><stz-icon name="external" [size]="14" />{{ t('app.step.consoleLink') }}</button>
             </div>
           </li>
           <li>
@@ -64,21 +64,21 @@ import { Secret, SecretField } from '../../ui/secret';
       <form class="fields" (submit)="$event.preventDefault(); save()">
         <div class="field">
           <label for="client-id">{{ t('app.clientId') }}</label>
-          <rmc-secret-field>
+          <stz-secret-field>
             <input id="client-id" class="input mono" autocomplete="off" spellcheck="false" [value]="clientId()"
                    (input)="clientId.set(value($event))" [placeholder]="t('app.clientIdPlaceholder')" />
-          </rmc-secret-field>
+          </stz-secret-field>
         </div>
         @if (twitch.saveError(); as error) {
-          <div class="banner danger"><rmc-icon name="alert" />{{ t(errorKey(error)) }}</div>
+          <div class="banner danger"><stz-icon name="alert" />{{ t(errorKey(error)) }}</div>
         }
         <div class="row">
-          <p class="faint small hint"><rmc-icon name="lock" [size]="14" /> {{ t(encrypted() ? 'app.encrypted' : 'app.notEncrypted') }}</p>
+          <p class="faint small hint"><stz-icon name="lock" [size]="14" /> {{ t(encrypted() ? 'app.encrypted' : 'app.notEncrypted') }}</p>
           @if (replacing()) {
             <button type="button" class="btn ghost" (click)="replacing.set(false)">{{ t('common.cancel') }}</button>
           }
           <button type="submit" class="btn primary" [disabled]="!complete() || twitch.saving()">
-            <rmc-icon [name]="twitch.saving() ? 'refresh' : 'check'" [size]="16" />{{ twitch.saving() ? t('app.checking') : t('app.save') }}
+            <stz-icon [name]="twitch.saving() ? 'refresh' : 'check'" [size]="16" />{{ twitch.saving() ? t('app.checking') : t('app.save') }}
           </button>
         </div>
       </form>
@@ -106,7 +106,7 @@ export class AppForm {
 
   protected readonly twitch = inject(TwitchStore);
   private readonly settings = inject(SettingsStore);
-  private readonly rmc = inject(RMC);
+  private readonly stz = inject(STZ);
   protected readonly t = inject(I18n).t;
 
   protected readonly clientId = signal('');
@@ -135,6 +135,6 @@ export class AppForm {
   }
 
   protected open(link: 'twitchConsole' | 'twitchSecurity'): void {
-    void this.rmc.openLink(link);
+    void this.stz.openLink(link);
   }
 }

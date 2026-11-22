@@ -5,7 +5,7 @@ import { TwitchStore } from '../stores/twitch.store';
 
 /** Title bar: the Twitch connection at a glance; a click opens the Twitch page. */
 @Component({
-  selector: 'rmc-status-pill',
+  selector: 'stz-status-pill',
   imports: [RouterLink],
   template: `
     <a routerLink="/twitch" [class]="'pill focusable ' + tone()" [title]="t('pill.open')">

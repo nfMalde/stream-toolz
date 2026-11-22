@@ -1,0 +1,19 @@
+{
+  "name": "@stream-toolz/readmychat",
+  "version": "0.0.1-alpha",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "description": "ReadMyChat, a Stream Toolz module: reads the Twitch chat aloud (filters, queue, a voice per language). src: no Electron; main: the module in the main process, through its host",
+  "exports": {
+    ".": "./src/index.ts",
+    "./api": "./src/api.ts",
+    "./main": "./main/module.ts",
+    "./preload": "./main/preload.ts"
+  },
+  "dependencies": {
+    "@stream-toolz/core": "*",
+    "@stream-toolz/speech": "*",
+    "@stream-toolz/twitch": "*"
+  }
+}

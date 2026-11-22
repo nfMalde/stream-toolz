@@ -1,24 +1,18 @@
-import { Component, inject } from '@angular/core';
+import { NgComponentOutlet } from '@angular/common';
+import { Component, computed, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { PRODUCT_BYLINE, PRODUCT_NAME } from '@rmc/api';
-import { BRIDGE_AVAILABLE } from './core/rmc';
+import { PRODUCT_BYLINE, PRODUCT_NAME } from '@stz/api';
+import { BRIDGE_AVAILABLE } from './core/stz';
 import { StreamerMode } from './core/streamer';
-import { I18n, type TextKey } from './i18n/i18n';
+import { I18n } from './i18n/i18n';
+import { MODULE_UIS } from './modules';
 import { Guide } from './pages/guide/guide';
-import { ReaderStore } from './stores/reader.store';
 import { SettingsStore } from './stores/settings.store';
-import { Icon, type IconName } from './ui/icon';
+import { Icon } from './ui/icon';
 import { LinkBar } from './ui/link-bar';
 import { RevealDialog } from './ui/secret';
 import { StatusPill } from './ui/status-pill';
-import { Toggle } from './ui/toggle';
-
-interface NavItem {
-  path: string;
-  label: TextKey;
-  icon: IconName;
-}
 
 const LANGUAGES = [
   { id: 'de', name: 'Deutsch' },
@@ -26,8 +20,8 @@ const LANGUAGES = [
 ];
 
 @Component({
-  selector: 'rmc-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, Icon, StatusPill, Guide, LinkBar, RevealDialog, Toggle],
+  selector: 'stz-root',
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgComponentOutlet, Icon, StatusPill, Guide, LinkBar, RevealDialog],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -36,23 +30,16 @@ export class App {
   protected readonly product = PRODUCT_NAME;
   protected readonly byline = PRODUCT_BYLINE;
   protected readonly settings = inject(SettingsStore);
-  protected readonly reader = inject(ReaderStore);
   protected readonly streamer = inject(StreamerMode);
   protected readonly t = inject(I18n).t;
   protected readonly languages = LANGUAGES;
 
+  /** The modules that are on: their pages in the navigation, their control at its bottom. */
+  protected readonly modules = computed(() => MODULE_UIS.filter((module) => this.settings.moduleEnabled(module.id)));
+
   constructor() {
     inject(Title).setTitle(`${PRODUCT_NAME} ${PRODUCT_BYLINE}`);
   }
-
-  protected readonly nav: NavItem[] = [
-    { path: '/live', label: 'nav.live', icon: 'chat' },
-    { path: '/events', label: 'nav.events', icon: 'gift' },
-    { path: '/twitch', label: 'nav.twitch', icon: 'plug' },
-    { path: '/voices', label: 'nav.voices', icon: 'mic' },
-    { path: '/output', label: 'nav.output', icon: 'broadcast' },
-    { path: '/settings', label: 'nav.settings', icon: 'sliders' },
-  ];
 
   /** App language, from the title bar (also under Settings). */
   protected setLanguage(language: string): void {

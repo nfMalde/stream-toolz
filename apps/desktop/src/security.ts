@@ -6,14 +6,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { app, protocol, session, type IpcMainEvent, type IpcMainInvokeEvent, type WebContents } from 'electron';
+import { env } from './env';
 
 export const APP_SCHEME = 'app';
-export const APP_ORIGIN = `${APP_SCHEME}://rmc`;
+export const APP_ORIGIN = `${APP_SCHEME}://stz`;
 /** The hidden player window's page (audio.ts): empty, may load nothing; the player is its preload. */
 export const AUDIO_PAGE_URL = `${APP_ORIGIN}/audio.html`;
 
 /** Dev only: the Angular dev server (ng serve). */
-export const DEV_URL = process.env.RMC_DEV_URL;
+export const DEV_URL = env('DEV_URL');
 
 const SCRIPT_SRC = DEV_URL ? `'self' ${DEV_URL}` : `'self'`;
 const CONNECT_SRC = DEV_URL ? `'self' ${DEV_URL} ${DEV_URL.replace(/^http/, 'ws')}` : `'self'`;
@@ -33,6 +34,16 @@ export const CONTENT_SECURITY_POLICY = [
 ].join('; ');
 
 const AUDIO_PAGE = "<!doctype html><meta charset=\"utf-8\"><title>audio</title>";
+
+/**
+ * Chromium resolves no host name at all (from GT Toolz): the windows show only app://stz, so a lookup could only come
+ * from Chromium itself (prefetching and the like). localhost stays for the dev server. Twitch (Node's fetch and
+ * WebSocket in the main process), the voice downloads and the local server do not use Chromium's resolver; the
+ * login page opens in the user's browser. Must run before the app is ready.
+ */
+export function blockHostLookups(): void {
+  app.commandLine.appendSwitch('host-resolver-rules', 'MAP * ~NOTFOUND, EXCLUDE localhost');
+}
 
 /** Must run before the app is ready. */
 export function registerAppScheme(): void {
@@ -63,28 +74,43 @@ const MIME: Record<string, string> = {
 };
 
 /**
- * app://rmc/: the player page always (also in dev, so the player and the device list share one origin),
+ * app://stz/: the player page always (also in dev, so the player and the device list share one origin),
  * and the built UI from uiDir when there is no dev server (unknown paths get index.html, for the router).
  */
 export function serveApp(uiDir: string | undefined): void {
   const root = uiDir ? path.resolve(uiDir) : undefined;
   protocol.handle(APP_SCHEME, async (request) => {
     const url = new URL(request.url);
-    if (url.host !== 'rmc') return new Response('Not found', { status: 404 });
+    if (url.host !== 'stz') return new Response('Not found', { status: 404 });
     const headers = { 'Content-Security-Policy': CONTENT_SECURITY_POLICY, 'X-Content-Type-Options': 'nosniff' };
     if (url.pathname === '/audio.html') {
       return new Response(AUDIO_PAGE, { headers: { ...headers, 'Content-Security-Policy': "default-src 'none'", 'Content-Type': MIME['.html']! } });
     }
     if (!root) return new Response('Not found', { status: 404 });
-    let file = path.resolve(root, `.${decodeURIComponent(url.pathname)}`);
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(url.pathname);
+    } catch {
+      return new Response('Bad request', { status: 400 });
+    }
+    let file = path.resolve(root, `.${decoded}`);
     // Never anything outside the UI folder.
     if (file !== root && !file.startsWith(root + path.sep)) return new Response('Forbidden', { status: 403 });
-    if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) file = path.join(root, 'index.html');
+    // Only plain files; a folder, a missing path or a device name ("CON") gets the app page.
+    if (!isFile(file)) file = path.join(root, 'index.html');
     return new Response(await fs.promises.readFile(file), { headers: { ...headers, 'Content-Type': MIME[path.extname(file).toLowerCase()] ?? 'application/octet-stream' } });
   });
 }
 
-/** The app's own page (app://rmc, in dev the Angular dev server) as a permission origin; with or without a final slash. */
+function isFile(file: string): boolean {
+  try {
+    return fs.statSync(file).isFile();
+  } catch {
+    return false;
+  }
+}
+
+/** The app's own page (app://stz, in dev the Angular dev server) as a permission origin; with or without a final slash. */
 function isAppOrigin(origin: string): boolean {
   const bare = origin.replace(/\/$/, '');
   return bare === APP_ORIGIN || (!!DEV_URL && bare === new URL(DEV_URL).origin);

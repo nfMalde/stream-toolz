@@ -1,24 +1,46 @@
-// The only bridge between the UI and the main process: a fixed set of calls (window.rmc).
+// The only bridge between the UI and the main process: a fixed set of calls (window.stz), the shell's and one
+// namespace per built-in module (window.stz.<id>, built by the module's own part, e.g. readmychat/main/preload.ts).
 // Runs sandboxed with context isolation; the UI never sees ipcRenderer itself.
 
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron';
-import type { RmcApi, Unsubscribe } from '@stream-toolz/runtime/app-api';
+import type { BridgeScope } from '@stream-toolz/core/api';
+import { READMYCHAT } from '@stream-toolz/readmychat/api';
+import { readMyChatBridge } from '@stream-toolz/readmychat/preload';
+import { COUNTDOWN } from '@stream-toolz/countdown/api';
+import { countdownBridge } from '@stream-toolz/countdown/preload';
+import { CHATOVERLAY } from '@stream-toolz/chatoverlay/api';
+import { chatoverlayBridge } from '@stream-toolz/chatoverlay/preload';
+import { ALERTS } from '@stream-toolz/alerts/api';
+import { alertsBridge } from '@stream-toolz/alerts/preload';
+import { CHANNELPOINTS } from '@stream-toolz/channelpoints/api';
+import { channelpointsBridge } from '@stream-toolz/channelpoints/preload';
+import { BOT } from '@stream-toolz/bot/api';
+import { botBridge } from '@stream-toolz/bot/preload';
+import type { StzApi, Unsubscribe } from './bridge-api';
 
-const invoke = <T>(name: string, ...args: unknown[]) => ipcRenderer.invoke(`rmc:${name}`, ...args) as Promise<T>;
+const invoke = <T>(name: string, ...args: unknown[]) => ipcRenderer.invoke(`stz:${name}`, ...args) as Promise<T>;
 
 function subscribe<T>(channel: string): (listener: (value: T) => void) => Unsubscribe {
   return (listener) => {
     const handler = (_event: IpcRendererEvent, value: T) => listener(value);
-    ipcRenderer.on(`rmc:${channel}`, handler);
-    return () => ipcRenderer.removeListener(`rmc:${channel}`, handler);
+    ipcRenderer.on(`stz:${channel}`, handler);
+    return () => ipcRenderer.removeListener(`stz:${channel}`, handler);
   };
 }
 
-const api: RmcApi = {
+/** A module's namespace: its calls are stz:<id>:<name>, its events stz:<id>:<event>. */
+const scope = (id: string): BridgeScope => ({
+  invoke: <T>(name: string, ...args: unknown[]) => invoke<T>(`${id}:${name}`, ...args),
+  subscribe: <T>(event: string) => subscribe<T>(`${id}:${event}`),
+});
+
+const api: StzApi = {
   info: () => invoke('info'),
   getConfig: () => invoke('getConfig'),
-  setSettings: (change) => invoke('setSettings', change),
-  onSettings: subscribe('settings'),
+  setAppSettings: (change) => invoke('setAppSettings', change),
+  onAppSettings: subscribe('app-settings'),
+  setModuleEnabled: (id, enabled) => invoke('setModuleEnabled', id, enabled),
+  onModules: subscribe('modules'),
   setGuideDone: (done) => invoke('setGuideDone', done),
 
   twitchStatus: () => invoke('twitchStatus'),
@@ -30,27 +52,13 @@ const api: RmcApi = {
   cancelTwitchLogin: () => invoke('cancelTwitchLogin'),
   twitchLogout: () => invoke('twitchLogout'),
 
-  readerStatus: () => invoke('readerStatus'),
-  onReaderStatus: subscribe('reader-status'),
-  chatLog: () => invoke('chatLog'),
-  onChatLog: subscribe('chat-log'),
-  pause: () => invoke('pause'),
-  resume: () => invoke('resume'),
-  skip: () => invoke('skip'),
-  clearQueue: () => invoke('clearQueue'),
-  removeQueued: (id) => invoke('removeQueued', id),
-  testMessage: (text) => invoke('testMessage', text),
-  testEvent: (kind) => invoke('testEvent', kind),
-  learnReward: () => invoke('learnReward'),
-  cancelLearnReward: () => invoke('cancelLearnReward'),
-
+  outputStatus: () => invoke('outputStatus'),
+  onOutputStatus: subscribe('output-status'),
   obsUrl: () => invoke('obsUrl'),
   newObsKey: () => invoke('newObsKey'),
   audioDevices: () => invoke('audioDevices'),
-  testOutput: () => invoke('testOutput'),
 
   listVoices: () => invoke('listVoices'),
-  previewVoice: (id) => invoke('previewVoice', id),
   voicePackages: () => invoke('voicePackages'),
   installVoicePackages: (ids) => invoke('installVoicePackages', ids),
   cancelVoiceInstall: () => invoke('cancelVoiceInstall'),
@@ -69,6 +77,13 @@ const api: RmcApi = {
   openLink: (id) => invoke('openLink', id),
   copyText: (id) => invoke('copyText', id),
   openFolder: (id) => invoke('openFolder', id),
+
+  [READMYCHAT]: readMyChatBridge(scope(READMYCHAT)),
+  [COUNTDOWN]: countdownBridge(scope(COUNTDOWN)),
+  [CHATOVERLAY]: chatoverlayBridge(scope(CHATOVERLAY)),
+  [ALERTS]: alertsBridge(scope(ALERTS)),
+  [CHANNELPOINTS]: channelpointsBridge(scope(CHANNELPOINTS)),
+  [BOT]: botBridge(scope(BOT)),
 };
 
-contextBridge.exposeInMainWorld('rmc', api);
+contextBridge.exposeInMainWorld('stz', api);

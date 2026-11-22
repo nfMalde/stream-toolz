@@ -1,12 +1,12 @@
 // The UI ships minified (Angular production build) with hidden source maps next to its bundles. A stack
-// trace from the UI points into the minified files (app://rmc/main-AB12.js:1:48211); this maps each frame
+// trace from the UI points into the minified files (app://stz/main-AB12.js:1:48211); this maps each frame
 // back to the TypeScript file and line, so a log a streamer sends shows where the error really is.
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { SourceMap } from 'node:module';
 
-const FRAME = /app:\/\/rmc\/([\w.-]+\.js):(\d+):(\d+)/g;
+const FRAME = /app:\/\/stz\/([\w.-]+\.js):(\d+):(\d+)/g;
 
 /** Source maps of the UI folder, loaded once each (null: none or unreadable). */
 const maps = new Map<string, SourceMap | null>();

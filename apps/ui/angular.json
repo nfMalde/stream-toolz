@@ -20,7 +20,7 @@
       },
       "root": "",
       "sourceRoot": "src",
-      "prefix": "rmc",
+      "prefix": "stz",
       "architect": {
         "build": {
           "builder": "@angular/build:application",

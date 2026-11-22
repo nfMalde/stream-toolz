@@ -1,31 +1,24 @@
-// Electron main process: one window with the Angular UI. The Twitch connection, the reader, the voice and
-// the local server (Twitch login, OBS browser source) run here.
+// Electron main process: one window with the Angular UI. The shell runs here (the Twitch connection, the local
+// server with the OBS browser source, the audio outputs, shortcuts, settings and secrets), and the modules that are
+// switched on, each through its host (modules.ts).
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { app, BrowserWindow, Menu, nativeTheme, shell } from 'electron';
-import {
-  ChatReader,
-  defaultSettings,
-  languageOf,
-  normalizeSettings,
-  PRODUCT_BYLINE,
-  PRODUCT_NAME,
-  spokenTexts,
-  TwitchConnection,
-  type AppConfig,
-  type Settings,
-} from '@stream-toolz/runtime';
+import { app, BrowserWindow, clipboard, dialog, Menu, nativeTheme, shell } from 'electron';
+import { normalizeAppSettings, PRODUCT_BYLINE, PRODUCT_NAME, type AppSettings, type OutputStatus } from '@stream-toolz/core';
+import { asciiPath, removeRetiredPackages } from '@stream-toolz/speech';
+import { TwitchConnection } from '@stream-toolz/twitch';
 import { DeviceAudio } from './audio';
+import { loadConfig, saveConfig, type ConfigFile } from './config';
+import { env } from './env';
 import { Hotkeys } from './hotkeys';
-import { loadConfig, saveConfig } from './config';
 import { registerIpc } from './ipc';
 import { LocalServer } from './local-server';
 import { createLogger, errorText } from './logger';
+import { Modules } from './modules';
 import { ObsOutput } from './obs';
 import { SecretFile } from './secrets';
-import { APP_ORIGIN, DEV_URL, guardWebContents, hardenSession, registerAppScheme, serveApp } from './security';
-import { VoiceHolder } from './voice';
+import { APP_ORIGIN, DEV_URL, blockHostLookups, guardWebContents, hardenSession, registerAppScheme, serveApp } from './security';
 
 const dev = !app.isPackaged;
 /** Repository root in dev (apps/desktop/dist/main.cjs). */
@@ -41,24 +34,30 @@ const suffix = dev ? '-dev' : '';
 app.setPath('userData', adoptDataFolder(app.getPath('appData'), APP_NAME + suffix, FORMER_APP_NAMES.map((name) => name + suffix)));
 
 /**
- * Settings, the encrypted Twitch data (Client ID, secret, tokens) and logs always live in the user's profile
+ * Settings, the encrypted Twitch data (Client ID, tokens) and logs always live in the user's profile
  * (%APPDATA%\Stream Toolz, dev: %APPDATA%\Stream Toolz-dev), never in the repository: nothing secret can end up
- * in a commit. RMC_DATA_DIR may move them, but not into the repository.
+ * in a commit. STZ_DATA_DIR may move them, but not into the repository.
  */
 const dataDir = profileDataDir();
 const dirs = {
   // Voice packages are no secret: dev shares the repository's download cache with the console tools.
-  voices: dev && !process.env.RMC_DATA_DIR ? path.join(repoRoot, '.cache', 'tts') : path.join(dataDir, 'voices'),
+  // ASCII paths for the engines (a profile like C:\Users\Jörg gets its short name, ascii-path.ts).
+  voices: asciiPath(dev && !env('DATA_DIR') ? path.join(repoRoot, '.cache', 'tts') : path.join(dataDir, 'voices'), console.error),
   logs: path.join(dataDir, 'logs'),
-  work: path.join(dataDir, 'cache', 'speech'),
+  work: asciiPath(path.join(dataDir, 'cache', 'speech'), console.error),
 };
 const configFile = path.join(dataDir, 'config.json');
 const secretsFile = path.join(dataDir, 'secrets.bin');
 
 /** Built UI: next to the app when installed, the Angular build output in dev. */
 const uiDir = app.isPackaged ? path.join(process.resourcesPath, 'ui') : path.join(repoRoot, 'apps', 'ui', 'dist', 'ui', 'browser');
+/** Quitting waits at most this long for the local server (its OBS sources) to close. */
+const QUIT_TIMEOUT_MS = 3_000;
 
 registerAppScheme();
+blockHostLookups();
+// Screenshot script (dev): Windows stops painting a window that others cover, and the shots would show an old frame.
+if (dev && env('SCREENSHOTS')) app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 // One instance only: two would fight over the local port and read the chat twice.
 if (!app.requestSingleInstanceLock()) {
@@ -89,22 +88,40 @@ async function start(): Promise<void> {
   });
   fs.rmSync(dirs.work, { recursive: true, force: true });
 
-  let config: AppConfig = loadConfig(configFile, defaultSettings(app.getLocale()));
-  const settings = () => config.settings;
+  let config: ConfigFile = loadConfig(configFile, app.getLocale(), log);
+  const appSettings = () => config.app;
+  const save = (change: Partial<ConfigFile>) => {
+    config = { ...config, ...change };
+    saveConfig(configFile, config);
+  };
   const secrets = new SecretFile(secretsFile, log);
+  const send = (channel: string, value: unknown) => {
+    if (window && !window.isDestroyed()) window.webContents.send(channel, value);
+  };
+  let modules: Modules | undefined;
 
-  // --- Outputs ---
-  const audio = new DeviceAudio(path.join(__dirname, 'audio-preload.cjs'), dev, () => settings().deviceId);
+  // Packages that left the catalogue (Kokoro) are cleared once; nothing uses them.
+  removeRetiredPackages(dirs.voices, (line) => log(`VOICES    ${line}`));
+
+  // --- Outputs: an audio device, and the OBS browser source on the local server ---
+  const audio = new DeviceAudio(path.join(__dirname, 'audio-preload.cjs'), dev);
   audio.start();
-  let reader: ChatReader | undefined;
-  const obs = new ObsOutput((count) => reader?.setObsClients(count), log);
-  const sink = () => (settings().output === 'obs' ? obs : audio);
-  const obsUrl = () => `http://127.0.0.1:${settings().serverPort}/obs/${secrets.obsKey}/`;
+  let portInUse = false;
+  const outputStatus = (): OutputStatus => ({ obsClients: obs.clientCount, portInUse });
+  const outputChanged = () => {
+    const status = outputStatus();
+    send('stz:output-status', status);
+    modules?.outputChanged(status);
+  };
+  const obs = new ObsOutput(outputChanged, log);
+  const serverUrl = (id: string) => `http://127.0.0.1:${appSettings().serverPort}/${id}/${secrets.obsKey}/`;
+  const obsUrl = () => serverUrl('obs');
 
   // --- Twitch: the streamer's own app (type Public), login by code on twitch.tv/activate ---
   const twitch = new TwitchConnection({
     store: secrets.twitchStore,
-    channel: () => settings().channel,
+    channel: () => appSettings().channel,
+    features: () => modules?.twitchFeatures() ?? [],
     // Only Twitch's own login page (the address comes from Twitch's answer).
     openBrowser: (url) => {
       if (/^https:\/\/(www\.)?twitch\.tv\//.test(url)) void shell.openExternal(url);
@@ -113,61 +130,69 @@ async function start(): Promise<void> {
   });
 
   // --- Local server: the OBS browser source ---
-  const server = new LocalServer({ obs, obsKey: () => secrets.obsKey, language: () => settings().language, log });
-  const send = (channel: string, value: unknown) => {
-    if (window && !window.isDestroyed()) window.webContents.send(channel, value);
-  };
+  const server = new LocalServer({ obs, obsKey: () => secrets.obsKey, language: () => appSettings().language, log });
   const listen = async () => {
     try {
-      await server.listen(settings().serverPort);
-      reader?.setPortInUse(false);
+      await server.listen(appSettings().serverPort);
+      portInUse = false;
     } catch (err) {
-      reader?.setPortInUse(true);
-      log(`SERVER    port ${settings().serverPort}: ${(err as NodeJS.ErrnoException).code ?? (err as Error).message}`);
+      portInUse = true;
+      log(`SERVER    port ${appSettings().serverPort}: ${(err as NodeJS.ErrnoException).code ?? (err as Error).message}`);
     }
+    outputChanged();
   };
 
-  // --- Voice and reader ---
-  const voice = new VoiceHolder(dirs.voices, dirs.work, settings, (id) => reader?.setVoice(id), log);
-  reader = new ChatReader({
-    settings,
-    sink,
-    speech: (language) => voice.get(language),
-    ownUserId: () => twitch.ownUserId,
-    onRewardLearned: (rewardId) => void applySettings({ rewardId }),
-    log,
-  });
-  const chat = reader;
-  twitch.on('message', (message) => chat.receive(message));
-  twitch.on('deleted', (id) => chat.deleted(id));
-  twitch.on('userCleared', (userId) => chat.userCleared(userId));
-  twitch.on('chatCleared', () => chat.chatCleared());
-  twitch.on('event', (event) => chat.event(event));
+  // --- System-wide shortcuts, for every module ---
+  const hotkeys = new Hotkeys((status) => send('stz:hotkey-status', status), log);
 
-  // --- System-wide shortcuts ---
-  const hotkeys = new Hotkeys(
-    {
-      pause: () => (chat.status.state === 'paused' ? chat.resume() : chat.pause()),
-      skip: () => chat.skip(),
-      clear: () => chat.clear(),
+  // --- Modules ---
+  modules = new Modules({
+    dev,
+    locale: app.getLocale(),
+    app: appSettings,
+    stored: (id) => config.modules[id],
+    save: (id, module) => save({ modules: { ...config.modules, [id]: module } }),
+    twitch,
+    device: audio,
+    obs,
+    outputStatus,
+    hotkeys,
+    server,
+    serverUrl,
+    desktop: {
+      copyText: (text) => clipboard.writeText(text),
+      openLocalPage: async (url) => {
+        // Only this PC's own address: a module opens nothing on the internet.
+        if (!/^http:\/\/(127\.0\.0\.1|localhost):\d{2,5}\//.test(url)) throw new Error('Not allowed');
+        await shell.openExternal(url);
+      },
+      openFolder: async (folder) => {
+        await fs.promises.mkdir(folder, { recursive: true });
+        await shell.openPath(folder);
+      },
+      pickFolder: async () => {
+        const result = await dialog.showOpenDialog({ properties: ['openDirectory', 'createDirectory'] });
+        return result.canceled ? undefined : result.filePaths[0];
+      },
+      pickFiles: async (extensions) => {
+        const result = await dialog.showOpenDialog({ properties: ['openFile', 'multiSelections'], filters: [{ name: extensions.join(', '), extensions }] });
+        return result.canceled ? [] : result.filePaths;
+      },
     },
-    (status) => send('rmc:hotkey-status', status),
+    dirs: { ...dirs, data: dataDir },
     log,
-  );
+    send,
+  });
+  const running = modules;
 
-  async function applySettings(change: Record<string, unknown>): Promise<Settings> {
-    const before = config.settings;
-    const next = normalizeSettings({ ...before, ...change }, before);
-    config = { ...config, settings: next };
-    saveConfig(configFile, config);
+  async function applyAppSettings(change: Record<string, unknown>): Promise<AppSettings> {
+    const before = config.app;
+    const next = normalizeAppSettings({ ...before, ...change }, before);
+    save({ app: next });
     if (next.channel !== before.channel) twitch.reconnect();
     if (next.serverPort !== before.serverPort) await listen();
-    if (next.output !== before.output) (before.output === 'obs' ? obs : audio).stop();
-    const voiceKeys: (keyof Settings)[] = ['voices', 'speechLanguage', 'rate', 'commaPause', 'sentencePause'];
-    if (voiceKeys.some((key) => JSON.stringify(next[key]) !== JSON.stringify(before[key]))) voice.invalidate();
-    hotkeys.apply(next.hotkeys);
-    chat.wake();
-    send('rmc:settings', next);
+    send('stz:app-settings', next);
+    running.appChanged(next, before);
     return next;
   }
 
@@ -178,35 +203,16 @@ async function start(): Promise<void> {
     dev,
     secrets,
     twitch,
-    reader: chat,
-    voice,
     audio,
+    obs,
     hotkeys,
-    getConfig: () => config,
-    twitchStatus: () => twitch.status,
-    applySettings,
-    setGuideDone: (done) => {
-      config = { ...config, guideDone: done };
-      saveConfig(configFile, config);
-    },
+    getConfig: () => ({ app: config.app, modules: running.states, guideDone: config.guideDone }),
+    applyAppSettings,
+    setModuleEnabled: (id, enabled) => running.setEnabled(id, enabled),
+    setGuideDone: (done) => save({ guideDone: done }),
+    outputStatus,
     obsUrl,
-    testOutput: async () => {
-      const speech = await voice.get(languageOf(settings().speechLanguage));
-      if (!speech) throw new Error('no-voice');
-      const output = sink();
-      if (!output.ready) throw new Error('obs-not-connected');
-      output.play(await speech.synthesize(spokenTexts(settings().speechLanguage).outputTest), settings().volume / 100);
-    },
-    // Previews are for the user's own ears: always on the audio device, never on the stream.
-    previewVoice: async (id) => {
-      audio.stop();
-      void audio.play(await voice.preview(id), settings().volume / 100);
-    },
-    voicesChanged: () => {
-      voice.close();
-      voice.invalidate();
-      chat.wake();
-    },
+    voicesChanged: (phase) => running.voicesChanged(phase),
     log,
     send,
   });
@@ -223,19 +229,20 @@ async function start(): Promise<void> {
     event.preventDefault();
     quitting = true;
     hotkeys.close();
-    chat.stop();
+    running.stopAll();
     twitch.stop();
     obs.close();
-    voice.close();
     audio.close();
-    void server.close().finally(() => app.exit(0));
+    // Never kept open by a server that does not finish (the app would stay in the background, holding the
+    // single-instance lock): at most QUIT_TIMEOUT_MS.
+    void Promise.race([server.close(), new Promise((resolve) => setTimeout(resolve, QUIT_TIMEOUT_MS))]).finally(() => app.exit(0));
   });
   app.on('window-all-closed', () => app.quit());
 
   await listen();
-  hotkeys.apply(settings().hotkeys);
+  // The modules first: they listen before the first event arrives, and the connection knows what they read.
+  running.startEnabled();
   twitch.start();
-  chat.start();
 }
 
 function createWindow(): void {
@@ -260,7 +267,7 @@ function createWindow(): void {
       spellcheck: false,
       navigateOnDragDrop: false,
       safeDialogs: true,
-      devTools: dev || process.env.RMC_DEVTOOLS === '1',
+      devTools: dev || env('DEVTOOLS') === '1',
     },
   });
   window.once('ready-to-show', () => window?.show());
@@ -288,7 +295,8 @@ function createWindow(): void {
     }
   });
   void window.loadURL(DEV_URL ?? `${APP_ORIGIN}/`);
-  if (dev && process.env.RMC_SCREENSHOTS) runScreenshotScript(window, process.env.RMC_SCREENSHOTS);
+  const screenshots = env('SCREENSHOTS');
+  if (dev && screenshots) runScreenshotScript(window, screenshots);
 }
 
 /**
@@ -312,10 +320,11 @@ function adoptDataFolder(appData: string, name: string, formerNames: string[]): 
 
 function profileDataDir(): string {
   const profile = app.getPath('userData');
-  if (!process.env.RMC_DATA_DIR) return profile;
-  const wanted = path.resolve(process.env.RMC_DATA_DIR);
+  const dataDir = env('DATA_DIR');
+  if (!dataDir) return profile;
+  const wanted = path.resolve(dataDir);
   if (isInside(wanted, repoRoot)) {
-    console.error(`[app] RMC_DATA_DIR must not be inside the repository (secrets would be next to the code); using ${profile}`);
+    console.error(`[app] STZ_DATA_DIR must not be inside the repository (secrets would be next to the code); using ${profile}`);
     return profile;
   }
   return wanted;
@@ -348,6 +357,6 @@ function runScreenshotScript(win: BrowserWindow, scriptFile: string): void {
       if ('shot' in step) fs.writeFileSync(path.join(dir, `${step.shot}.png`), (await win.webContents.capturePage()).toPNG());
     }
     console.log(`[dev] screenshots saved to ${dir}`);
-    if (process.env.RMC_SCREENSHOTS_QUIT === '1') app.quit();
+    if (env('SCREENSHOTS_QUIT') === '1') app.quit();
   });
 }

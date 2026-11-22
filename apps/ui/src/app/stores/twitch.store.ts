@@ -1,7 +1,7 @@
 import { computed, inject } from '@angular/core';
 import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
-import type { TwitchAppInput, TwitchStatus } from '@rmc/api';
-import { BRIDGE_AVAILABLE, RMC } from '../core/rmc';
+import type { TwitchAppInput, TwitchStatus } from '@stz/api';
+import { BRIDGE_AVAILABLE, STZ } from '../core/stz';
 
 interface TwitchState {
   status: TwitchStatus | null;
@@ -21,11 +21,11 @@ export const TwitchStore = signalStore(
     connected: computed(() => status()?.stage === 'connected'),
     loggedIn: computed(() => !!status()?.user && status()?.stage !== 'logged-out' && status()?.stage !== 'no-app'),
   })),
-  withMethods((store, rmc = inject(RMC)) => ({
+  withMethods((store, stz = inject(STZ)) => ({
     async saveApp(input: TwitchAppInput): Promise<boolean> {
       patchState(store, { saving: true, saveError: null });
       try {
-        patchState(store, { status: await rmc.saveTwitchApp(input) });
+        patchState(store, { status: await stz.saveTwitchApp(input) });
         return true;
       } catch (err) {
         // Electron prefixes the message ("Error invoking remote method …: Error: invalid-client").
@@ -37,31 +37,31 @@ export const TwitchStore = signalStore(
       }
     },
     async removeApp(): Promise<void> {
-      patchState(store, { status: await rmc.removeTwitchApp(), saveError: null });
+      patchState(store, { status: await stz.removeTwitchApp(), saveError: null });
     },
     login(): Promise<void> {
-      return rmc.twitchLogin();
+      return stz.twitchLogin();
     },
     reopenLogin(): Promise<void> {
-      return rmc.reopenTwitchLogin();
+      return stz.reopenTwitchLogin();
     },
     copyCode(): Promise<void> {
-      return rmc.copyText('loginCode');
+      return stz.copyText('loginCode');
     },
     cancelLogin(): Promise<void> {
-      return rmc.cancelTwitchLogin();
+      return stz.cancelTwitchLogin();
     },
     logout(): Promise<void> {
-      return rmc.twitchLogout();
+      return stz.twitchLogout();
     },
   })),
-  withHooks((store, rmc = inject(RMC)) => {
+  withHooks((store, stz = inject(STZ)) => {
     let unsubscribe = () => {};
     return {
       onInit() {
         if (!BRIDGE_AVAILABLE) return;
-        unsubscribe = rmc.onTwitchStatus((status) => patchState(store, { status }));
-        void rmc.twitchStatus().then((status) => patchState(store, { status }));
+        unsubscribe = stz.onTwitchStatus((status) => patchState(store, { status }));
+        void stz.twitchStatus().then((status) => patchState(store, { status }));
       },
       onDestroy() {
         unsubscribe();

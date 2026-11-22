@@ -1,0 +1,282 @@
+# A release, started by hand by a maintainer on main (Actions → Release → Run workflow), never by a tag or a merge.
+# Two approvals: before the first nothing is built or uploaded (only the plan, the checks and a preview); before the
+# second nothing is published (the installer is built and checked). From GT Toolz, without the Discord announcement
+# and without the update signature (Stream Toolz has no update check yet) (the user, 2026-11-22).
+#
+#   1. plan:    the version from the inputs (or the package.json), what changes for it (scripts/release/plan.mjs:
+#               the version in every package.json and the lockfile, CHANGELOG "Unreleased" → the version), the type
+#               check and the tests, and a preview in the run's summary. When something changes, a release commit on
+#               the branch release/v<version>. Stops unless both environments, "approval" and "release", have
+#               required reviewers.
+#   2. approve: the first approval (environment "approval"): build the installer.
+#   3. build:   the Windows installer from exactly the planned commit (scripts/release/release.mjs: build, tests,
+#               npm audit, the installer with Electron's fuses). Signed when the repository secrets for it are set
+#               (docs/06-release.md "Code signing"), else built with --unsigned and said so in the summary.
+#   4. attest:  build provenance for the installer (gh attestation verify), in a job that runs no npm code.
+#   5. publish: the second approval (environment "release"): the installer from the build, checked against the
+#               build's checksums and its provenance, SHA256SUMS.txt, and the release with its tag v<version>.
+#               A release commit reaches main by a pull request (main's ruleset); the summary says how.
+#
+# Repository settings this relies on (docs/06-release.md "CI"): the environments "approval" and "release", both with
+# required reviewers and the deployment branch main; immutable releases; the rulesets for main and tags v*.
+# Actions are pinned to exact versions, each at least 14 days old when pinned (docs/03-security.md). No package
+# cache: every install comes from the registry, and no other run can leave one behind for a release.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Channel: alpha and beta are pre-releases (0.1.0-beta), full is a release (0.1.0)'
+        type: choice
+        options: [alpha, beta, full]
+        default: alpha
+      bump:
+        description: 'Version bump (ignored when a version is given): none = the package.json version, pre = 0.1.0-alpha → 0.1.0-alpha.2'
+        type: choice
+        options: [none, pre, patch, minor, major]
+        default: none
+      version:
+        description: 'Exact version instead (e.g. 0.1.0-alpha.2); empty = from the bump'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+# One release at a time.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    # Only main: another branch would bring its own workflow and scripts.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      actions: read
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      prerelease: ${{ steps.plan.outputs.prerelease }}
+      sha: ${{ steps.commit.outputs.sha }}
+    steps:
+      - name: The approvals must be set up
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # Without required reviewers GitHub would create an environment on the fly, and nothing would wait.
+          for environment in approval release; do
+            reviewers="$(gh api "repos/$GH_REPO/environments/$environment" --jq '[.protection_rules[]? | select(.type == "required_reviewers")] | length' 2>/dev/null || echo 0)"
+            if [ "$reviewers" -lt 1 ]; then
+              echo "::error::The environment \"$environment\" needs required reviewers (Settings → Environments)."; exit 1
+            fi
+          done
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22.23.2
+          package-manager-cache: false
+      - run: npm ci
+      - name: Plan the version
+        id: plan
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          BUMP: ${{ inputs.bump }}
+          VERSION: ${{ inputs.version }}
+        run: node scripts/release/plan.mjs --apply "--channel=$CHANNEL" "--bump=$BUMP" "--version=$VERSION"
+      - name: The tag must be new
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: |
+          git fetch --tags --force
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "::error::v$VERSION exists already."; exit 1
+          fi
+      - name: Check
+        run: |
+          npm audit signatures
+          npm run typecheck
+          npm test
+      - name: Release commit (only when something changed)
+        id: commit
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+          CHANGED: ${{ steps.plan.outputs.changed }}
+        run: |
+          if [ "$CHANGED" = "true" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            # Only what the plan changed: the versions and CHANGELOG.md (release/ is ignored).
+            git add -A
+            git commit -m "Release v$VERSION"
+            git push origin "HEAD:refs/heads/release/v$VERSION"
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Preview
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+          PRERELEASE: ${{ steps.plan.outputs.prerelease }}
+        run: |
+          {
+            echo "## Release preview: v$VERSION"
+            echo
+            echo "- Pre-release: $PRERELEASE"
+            echo "- Commit: $(git rev-parse --short HEAD) ($(git log -1 --format=%s))"
+            echo "- Type check and tests passed. Nothing is built or uploaded before the first approval (environment \"approval\"), nothing is published before the second (environment \"release\")."
+            echo
+            echo "### Notes"
+            echo
+            cat release/notes.md
+          } >> "$GITHUB_STEP_SUMMARY"
+      # The notes for the release page (text only).
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: release-notes
+          path: release/notes.md
+          retention-days: 1
+
+  approve:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # The first approval: required reviewers on this environment. Nothing else happens here.
+    environment: approval
+    steps:
+      - env:
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: echo "v$VERSION approved."
+
+  build:
+    needs: [plan, approve]
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22.23.2
+          package-manager-cache: false
+      - run: npm ci
+      - name: Installer
+        shell: bash
+        env:
+          # Code signing (docs/06-release.md): a certificate file, or Azure Trusted Signing. Empty: an unsigned build.
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          STZ_SIGN_AZURE_ENDPOINT: ${{ secrets.STZ_SIGN_AZURE_ENDPOINT }}
+          STZ_SIGN_AZURE_ACCOUNT: ${{ secrets.STZ_SIGN_AZURE_ACCOUNT }}
+          STZ_SIGN_AZURE_PROFILE: ${{ secrets.STZ_SIGN_AZURE_PROFILE }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -n "${CSC_LINK:-}" ] || [ -n "${STZ_SIGN_AZURE_ENDPOINT:-}" ]; then
+            node scripts/release/release.mjs
+            echo "- Installer: **signed**" >> "$GITHUB_STEP_SUMMARY"
+          else
+            node scripts/release/release.mjs --unsigned
+            echo "- Installer: **unsigned** (no signing secrets set; SmartScreen will warn, docs/06-release.md)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      # Only for the next jobs of this run, kept for one day; the release is the download.
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: installers-windows
+          path: |
+            release/*/*.exe
+            release/*/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 1
+
+  attest:
+    # Apart from the build: no npm code runs where the provenance can be signed.
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          pattern: installers-*
+          path: artifacts
+      - uses: actions/attest-build-provenance@v4.2.2
+        with:
+          subject-path: artifacts/installers-windows/**/*.exe
+
+  publish:
+    needs: [plan, attest]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The second approval, right before anything becomes public.
+    environment: release
+    permissions:
+      contents: write
+      attestations: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@v8.0.2
+        with:
+          path: artifacts
+      - name: Collect and check the installer
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.plan.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir upload
+          # Exactly the expected installer, against the build's checksums and its provenance.
+          take() {
+            local system="$1" name="$2"
+            mapfile -t found < <(find "artifacts/installers-$system" -type f -name "$name")
+            [ "${#found[@]}" -eq 1 ] || { echo "::error::$name not (or more than once) in the $system build"; exit 1; }
+            (cd "$(dirname "${found[0]}")" && grep -E "  $name\$" SHA256SUMS.txt | sha256sum -c -)
+            gh attestation verify "${found[0]}" --repo "$GH_REPO"
+            cp "${found[0]}" upload/
+          }
+          take windows "Stream-Toolz-Setup-$VERSION-x64.exe"
+          (cd upload && sha256sum -- * > SHA256SUMS.txt && cat SHA256SUMS.txt)
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.plan.outputs.version }}
+          PRERELEASE: ${{ needs.plan.outputs.prerelease }}
+          SHA: ${{ needs.plan.outputs.sha }}
+        run: |
+          set -euo pipefail
+          # Every file first (as a draft, for a moment), then published at once: a published release cannot change.
+          flags=(--draft --title "Stream Toolz $VERSION" --notes-file artifacts/release-notes/notes.md --target "$SHA")
+          if [ "$PRERELEASE" = "true" ]; then flags+=(--prerelease); else flags+=(--latest); fi
+          gh release create "v$VERSION" "${flags[@]}" upload/*
+          gh release edit "v$VERSION" --draft=false
+          echo "Published: $(gh release view "v$VERSION" --json url --jq .url)" >> "$GITHUB_STEP_SUMMARY"
+          # main changes only by pull request (its ruleset): a release commit comes to main by one, merged as a merge
+          # commit so that the tag stays in main's history.
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$SHA" ]; then
+            {
+              echo
+              echo "**Next:** open a pull request from \`release/v$VERSION\` to \`main\` and merge it with a merge commit, so that main carries the version:"
+              echo
+              echo "\`gh pr create --repo $GH_REPO --base main --head release/v$VERSION --title \"Release v$VERSION\" --body \"Version and changelog of v$VERSION.\"\`"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

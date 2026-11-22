@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, resource } from '@angular/core';
-import type { LinkId } from '@rmc/api';
+import type { LinkId } from '@stz/api';
 import type { IconName } from '../ui/icon';
-import { RMC } from './rmc';
+import { STZ } from './stz';
 
 /** Donations (pure donations, no perks) and Maldö's channels, in the order they are shown (as in GT Toolz). */
 export const SUPPORT_LINKS: readonly LinkId[] = ['paypal', 'patreon'];
@@ -40,13 +40,13 @@ export const LINK_ICONS: Record<LinkId, IconName> = {
  */
 @Injectable({ providedIn: 'root' })
 export class Links {
-  private readonly rmc = inject(RMC);
-  private readonly available = resource({ loader: () => this.rmc.links() });
+  private readonly stz = inject(STZ);
+  private readonly available = resource({ loader: () => this.stz.links() });
   readonly support = computed(() => this.present(SUPPORT_LINKS));
   readonly channels = computed(() => this.present(CHANNEL_LINKS));
 
   open(id: LinkId): void {
-    void this.rmc.openLink(id);
+    void this.stz.openLink(id);
   }
 
   private present(ids: readonly LinkId[]): LinkId[] {

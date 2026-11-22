@@ -5,12 +5,17 @@
 
 import crypto from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { wavDuration, type AudioSink } from '@stream-toolz/runtime';
+import type { AudioSink } from '@stream-toolz/core';
+import { wavDuration } from '@stream-toolz/speech';
 
 /** Extra time after a clip's length before it counts as ended (the page did not answer). */
 const END_MARGIN_MS = 5_000;
 /** A comment line now and then keeps the connection open through OBS and proxies. */
 const PING_MS = 15_000;
+/** Connected sources at most; beyond that the oldest is dropped (a leaked key must not pile up connections). */
+const MAX_CLIENTS = 8;
+/** A clip never waits longer than this for the page's "done" (a broken header could claim hours). */
+const MAX_CLIP_SECONDS = 600;
 
 interface Client {
   id: number;
@@ -41,12 +46,7 @@ export class ObsOutput implements AudioSink {
     const client = this.clients.at(-1);
     if (!client) return Promise.resolve();
     const id = crypto.randomBytes(8).toString('hex');
-    let seconds = 10;
-    try {
-      seconds = wavDuration(wav);
-    } catch {
-      // Not a WAV: the page cannot decode it and reports the end.
-    }
+    const seconds = clipSeconds(wav);
     this.clips.set(id, wav);
     return new Promise((resolve) => {
       const timer = setTimeout(() => this.finish(id), seconds * 1000 + END_MARGIN_MS);
@@ -66,10 +66,21 @@ export class ObsOutput implements AudioSink {
 
   close(): void {
     this.stop();
-    for (const client of this.clients.splice(0)) {
-      clearInterval(client.ping);
-      client.res.end();
-    }
+    this.dropClients();
+  }
+
+  /**
+   * Ends every connected source. After "New address" the pages reconnect, get 404 under the old key and are
+   * gone for good; without this a page holding the old address would stay the one that plays.
+   */
+  dropClients(): void {
+    for (const client of this.clients.splice(0)) this.drop(client);
+    this.onClients(0);
+  }
+
+  private drop(client: Client): void {
+    clearInterval(client.ping);
+    client.res.end();
   }
 
   /** Requests below /obs/<key>/ (the key was checked): the page, its script, the events, the clips. */
@@ -94,6 +105,7 @@ export class ObsOutput implements AudioSink {
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive', 'X-Content-Type-Options': 'nosniff' });
     res.write('retry: 2000\n\n');
     const client: Client = { id: this.nextClient++, res, ping: setInterval(() => res.write(': ping\n\n'), PING_MS) };
+    while (this.clients.length >= MAX_CLIENTS) this.drop(this.clients.shift()!);
     // The newest source plays; the others stay quiet.
     for (const other of this.clients) this.event(other, 'idle', {});
     this.clients.push(client);
@@ -130,9 +142,20 @@ export function send(res: ServerResponse, status: number, type: string, body: st
     'Cache-Control': 'no-store',
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'no-referrer',
-    'Content-Security-Policy': "default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'",
+    // frame-ancestors: OBS loads the page at top level; a web page must not embed it (and play the chat there).
+    'Content-Security-Policy': "default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
   });
   res.end(body);
+}
+
+/** How long a clip plays, from its header; 10 s when that cannot be read (the player reports the end anyway). */
+export function clipSeconds(wav: Buffer): number {
+  try {
+    const seconds = wavDuration(wav);
+    return Number.isFinite(seconds) ? Math.min(MAX_CLIP_SECONDS, Math.max(0, seconds)) : 10;
+  } catch {
+    return 10;
+  }
 }
 
 const TEXTS = {

@@ -1,13 +1,13 @@
-// The Twitch app (Client ID, secret), the login tokens and the OBS key, encrypted with the system's own
+// The Twitch app (Client ID), the login tokens and the OBS key, encrypted with the system's own
 // protection (Electron safeStorage: DPAPI on Windows, Keychain on macOS, Secret Service on Linux). The file
 // can only be read by the same user account on the same computer. Without system encryption nothing is
 // written: the data stays in memory until the app closes.
 
 import crypto from 'node:crypto';
 import fs from 'node:fs';
-import path from 'node:path';
 import { safeStorage } from 'electron';
-import type { StoredTwitch, TwitchStore } from '@stream-toolz/runtime';
+import { writeFileAtomically } from './atomic-file';
+import type { StoredTwitch, TwitchStore } from '@stream-toolz/twitch';
 
 interface Secrets {
   twitch: StoredTwitch;
@@ -68,12 +68,8 @@ export class SecretFile {
     }
   }
 
-  /** Written to a temporary file first, so a crash never leaves a half-written file. */
   private write(): void {
     if (!this.persistent) return;
-    fs.mkdirSync(path.dirname(this.file), { recursive: true });
-    const temp = `${this.file}.tmp`;
-    fs.writeFileSync(temp, safeStorage.encryptString(JSON.stringify(this.value)));
-    fs.renameSync(temp, this.file);
+    writeFileAtomically(this.file, safeStorage.encryptString(JSON.stringify(this.value)));
   }
 }

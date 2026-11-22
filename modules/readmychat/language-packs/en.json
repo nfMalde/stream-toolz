@@ -1,0 +1,43 @@
+{
+  "format": "stream-toolz-language-pack",
+  "version": 1,
+  "id": "en",
+  "name": "English",
+  "locale": "en-US",
+  "words": [
+    "the", "and", "or", "but", "not", "is", "are", "am", "were", "be", "been", "being", "have", "has", "had", "do", "does", "did", "done",
+    "can", "could", "would", "should", "shall", "may", "might", "must", "i", "you", "he", "she", "we", "they", "me", "him", "her", "us",
+    "them", "my", "your", "his", "our", "their", "it", "its", "this", "that", "these", "those", "what", "why", "how", "who", "where",
+    "when", "which", "there", "here", "just", "now", "today", "tomorrow", "yesterday", "always", "never", "again", "very", "more", "much",
+    "many", "please", "thanks", "thank", "hello", "yes", "yeah", "yep", "nope", "no", "of", "to", "for", "from", "with", "on", "at", "by",
+    "about", "into", "over", "under", "after", "before", "if", "then", "than", "because", "too", "only", "really", "maybe", "good", "guys",
+    "game", "play", "playing", "dude", "love", "lets", "gonna", "wanna", "got", "get", "go", "going", "come", "look", "know", "think",
+    "want", "need", "like", "make", "made", "take", "say", "said", "tell", "everyone", "anyone", "someone", "something", "nothing",
+    "great", "awesome", "amazing", "beautiful", "cute", "best", "better", "well", "sure", "right", "welcome", "back", "sounds", "looks",
+    "happy", "enjoy", "played", "win", "won", "wait", "friend", "friends", "everybody", "everything", "all", "morning", "evening", "night",
+    "day", "time", "new", "first", "last", "next", "thx"
+  ],
+  "texts": {
+    "says": "{name} says: {message}",
+    "link": "link",
+    "testName": "Read My Chat",
+    "outputTest": "Hello! This is how the chat sounds on this output.",
+    "preview": "Hello chat! This is how I sound when I read your messages.",
+    "anonymous": "Someone",
+    "prime": "Prime",
+    "tier": "Tier {n}",
+    "events": {
+      "follow": "{name} just followed. Welcome!",
+      "sub": "{name} just subscribed. Thank you!",
+      "prime": "{name} subscribed with Prime. Thank you!",
+      "resub": "{name} has been subscribed for {months} months. Thank you!",
+      "gift": "{name} gifted a sub to {recipient}. Thank you!",
+      "communityGift": "{name} is gifting {count} subs to the community. Thank you!",
+      "raid": "{name} is raiding with {count} viewers. Welcome!"
+    },
+    "eventsOne": {
+      "communityGift": "{name} is gifting a sub to the community. Thank you!",
+      "raid": "{name} is raiding with one viewer. Welcome!"
+    }
+  }
+}

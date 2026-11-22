@@ -1,0 +1,17 @@
+{
+  "name": "@stream-toolz/core",
+  "version": "0.0.1-alpha",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "description": "Stream Toolz shell contract: the app API, the module contract, the app settings and settings checks; no Electron",
+  "exports": {
+    ".": "./src/index.ts",
+    "./api": "./src/api.ts",
+    "./normalize": "./src/normalize.ts"
+  },
+  "dependencies": {
+    "@stream-toolz/speech": "*",
+    "@stream-toolz/twitch": "*"
+  }
+}

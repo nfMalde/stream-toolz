@@ -1,6 +1,6 @@
 # Stream Toolz – Research and plan
 
-**Renamed 2026-10-28** from "ReadMyChat" to "Stream Toolz by Maldö": the app will hold more tools for streamers. "ReadMyChat" stays the name of the chat reader, its first module. The data folder of the old name moves over on the first start (`adoptDataFolder`, as in GT Toolz), so the login, the OBS address and the settings stay. Internal names (`rmc` prefixes, `window.rmc`, `RMC_*` variables, the voice catalogue format) keep the module's prefix.
+**Renamed 2026-10-28** from "ReadMyChat" to "Stream Toolz by Maldö": the app will hold more tools for streamers. "ReadMyChat" stays the name of the chat reader, its first module. The data folder of the old name moves over on the first start (`adoptDataFolder`, as in GT Toolz), so the login, the OBS address and the settings stay. The internal prefix is `stz` since the modules (`window.stz`, `stz:` IPC channels, `app://stz`, `STZ_*` variables, `stz-` elements); the `RMC_*` variables still work as a fallback.
 
 Kickoff 2026-10-22. The brief: a Twitch chat reader that reads the chat aloud, with Piper as the voice, a pause between messages, spam detection as a nice-to-have, and the user's own Twitch app (Client ID and secret, entered with a guide and stored encrypted). Everything local, as in GT Toolz.
 
@@ -11,7 +11,7 @@ Kickoff 2026-10-22. The brief: a Twitch chat reader that reads the chat aloud, w
 | Output | **Both**, chosen in the setup assistant: OBS browser source or an audio device | The OBS source puts the sound only into the stream with its own mixer channel; the device output works without OBS. Supporting both costs little. |
 | Default audience | **Everyone** (with filters on) | What most streamers expect. Subs/VIPs/mods only and a channel points reward stay selectable. |
 | Chat transport | **EventSub WebSocket** (`channel.chat.message`) | Twitch recommends EventSub for reading chat; IRC is still active but Twitch's migration guide points away from it, and Streamer.bot removed IRC in v1.0.5. |
-| Login | **Device code flow with the streamer's own app of type "Public"**: only the Client ID, no secret; the streamer confirms a code on twitch.tv/activate; scopes `user:read:chat` and `moderator:read:followers` (follows only) | Decided 2026-10-22, see "Login decision" below. |
+| Login | **Device code flow with the streamer's own app of type "Public"**: only the Client ID, no secret; the streamer confirms a code on twitch.tv/activate; scopes `user:read:chat` and `moderator:read:followers` (follows only); since 2026-10-28 only those of the modules that are on ([04-modules.md](04-modules.md)) | Decided 2026-10-22, see "Login decision" below. |
 | Login data | Electron `safeStorage` (DPAPI on Windows), in the user profile | Bound to the Windows user account; nothing is written without system encryption. |
 | Stack | Electron 43 + Angular 22 (zoneless, signals, NgRx Signal Stores), as GT Toolz | Same, proven setup; parts are copied, not shared. |
 
@@ -53,7 +53,7 @@ The user asked for follows, subs (Prime or normal), gifted subs and raids. Check
 1. EventSub notification → `chatMessageFromEvent` (defensive parse) → `ChatReader.receive`.
 2. `ChatFilter.check`: shared chat, own messages, ignored users, audience/reward, commands, blocked words, links, emote-only, duplicates, limit per person. Skipped messages get a reason shown in the history.
 3. `spokenMessage`: emotes and emoji out, mentions as names, links as "Link", repeats shortened, cut at a word.
-4. `detectLanguage` (`packages/runtime/src/chat/language.ts`): German or English from function words, umlauts and English contractions; words used in both languages ("so", "was", "stream") count for neither. Undecided messages ("gg", "KEKW") get the main language. Off: every message gets the main language.
+4. `detectLanguage` (`modules/readmychat/src/language.ts`): German or English from function words, umlauts and English contractions; words used in both languages ("so", "was", "stream") count for neither. Undecided messages ("gg", "KEKW") get the main language. Off: every message gets the main language.
 5. `ReadQueue`: mod delay (`readyAt`), oldest dropped beyond the maximum.
 6. Reader loop: the voice for the message's language (none installed: the main language's voice), the name in front ("sagt"/"says" in the message's language; by default always, optionally only when the speaker changed), the voice renders the parts with fixed comma/sentence pauses, the clip plays on the output, then the pause between messages.
 7. Moderation events remove queued messages or stop the one being read.
