@@ -6,6 +6,8 @@ the versions follow [Semantic Versioning](https://semver.org/). Each release on 
 
 ## [Unreleased]
 
+## [1.0.0-beta] - 2026-11-22
+
 The first release, 1.0.0-beta: Stream Toolz leaves the alpha (2026-11-22).
 
 ### Added
