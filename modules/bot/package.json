@@ -1,7 +1,7 @@
 {
   "name": "@stream-toolz/bot",
   "version": "0.1.0-beta",
-  "license": "UNLICENSED",
+  "license": "GPL-3.0-only",
   "private": true,
   "type": "module",
   "description": "Chat Bot, a Stream Toolz module. src: no Electron; main: the module in the main process, through its host",

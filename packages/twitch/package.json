@@ -1,7 +1,7 @@
 {
   "name": "@stream-toolz/twitch",
   "version": "0.1.0-beta",
-  "license": "UNLICENSED",
+  "license": "GPL-3.0-only",
   "private": true,
   "type": "module",
   "description": "Stream Toolz Twitch connection: the streamer's own Public app, login by code, EventSub, Helix; no Electron",

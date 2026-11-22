@@ -11,6 +11,8 @@ you want.
 
 ## Supported versions
 
+Stream Toolz is free software under the GPL-3.0 ([LICENSE](LICENSE)).
+
 Only the newest release (and the newest pre-release) gets security fixes.
 
 ## What Stream Toolz is built to do

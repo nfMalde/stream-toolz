@@ -1,6 +1,7 @@
 # Third-party notices
 
-Stream Toolz is built on the open-source components and optional downloads listed here. The app shows the same list
+Stream Toolz is free software under the GNU General Public License v3.0 (see [LICENSE](LICENSE)). It is built on the
+open-source components and optional downloads listed here. The app shows the same list
 with the **full license texts** under About. The texts of bundled packages are collected from their own license files
 at build time (`apps/desktop/scripts/build.mjs`); the list itself lives in `apps/desktop/src/licenses.ts`. Keep this
 file in sync with that list.
