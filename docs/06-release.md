@@ -54,7 +54,7 @@ The three checks in [02-desktop-app.md](02-desktop-app.md) "Before a release", r
 
 ## CI
 
-GitHub Actions workflows in `.github/workflows`, taken from GT Toolz on 2026-11-22 without its Discord announcement and its update signature (Stream Toolz has no update check); `cla.yml` came with the GPL-3.0 license the same day. All use Node 22.23.2 and `npm ci` (`.npmrc`: no install scripts, exact versions from the lockfile), run with read-only permissions unless a job needs more, and pin every action to an exact version at least 14 days old when pinned (Dependabot proposes newer ones with a 14-day cooldown, `.github/dependabot.yml`; npm packages are updated by hand).
+GitHub Actions workflows in `.github/workflows`, taken from GT Toolz on 2026-11-22 without its Discord announcement and its update signature (Stream Toolz has no update check); `cla.yml` came with the GPL-3.0 license the same day. All use Node 22.23.2 and `npm ci` (`.npmrc`: no install scripts, exact versions from the lockfile), try `npm audit signatures` up to three times (the registry's signing keys were missing for a moment twice on 2026-11-22: `EMISSINGSIGNATUREKEY` for `pkijs`, green on a re-run), run with read-only permissions unless a job needs more, and pin every action to an exact version at least 14 days old when pinned (Dependabot proposes newer ones with a 14-day cooldown, `.github/dependabot.yml`; npm packages are updated by hand).
 
 | Workflow | When | What |
 | --- | --- | --- |
