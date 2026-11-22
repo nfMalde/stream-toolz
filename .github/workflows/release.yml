@@ -121,7 +121,9 @@ jobs:
             # Only what the plan changed: the versions and CHANGELOG.md (release/ is ignored).
             git add -A
             git commit -m "Release v$VERSION"
-            git push origin "HEAD:refs/heads/release/v$VERSION"
+            # The branch is this workflow's own: one left behind by an earlier run of the same version that failed
+            # later on is replaced (the second run of 2026-11-22 was rejected by the first run's branch).
+            git push --force origin "HEAD:refs/heads/release/v$VERSION"
           fi
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Preview
