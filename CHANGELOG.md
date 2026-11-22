@@ -6,6 +6,8 @@ the versions follow [Semantic Versioning](https://semver.org/). Each release on 
 
 ## [Unreleased]
 
+The first release, 0.1.0-beta: Stream Toolz leaves the alpha (2026-11-22).
+
 ### Added
 
 - **Modules.** Stream Toolz is a shell with modules, each switched on or off on the Modules page. ReadMyChat is the

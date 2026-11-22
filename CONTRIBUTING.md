@@ -78,8 +78,9 @@ Words matter too: say what the app does and what it does not do, and do not name
   with OBS, which Windows). "Fixes #123" closes the issue when it is merged.
 - The **PR build** runs the type check, the tests and the app build on Windows and Linux. It must be green.
 - A maintainer reviews it. Small changes may be asked for; that is normal and no judgement.
-- The license is proprietary for now ([LICENSE](LICENSE)): by opening a pull request you agree that your change may be
-  used under it. A contributor license agreement, as GT Toolz has, comes when the project opens up.
+- The source is public, the license is proprietary for now ([LICENSE](LICENSE)): by opening a pull request you agree
+  that your change may be used under it and under a later license of the project. You keep the copyright in what you
+  write. A contributor license agreement, as [GT Toolz](https://github.com/nfMalde/gt-toolz) has, may follow.
 
 ## Dependencies
 
@@ -101,4 +102,5 @@ the examples, Countdown being the smallest complete one.
 
 ## Code of conduct
 
-Be kind and constructive: to the people here, to the viewers in the chat, and to the makers of other tools.
+Be kind and constructive: to the people here, to the viewers in the chat, and to the makers of other tools. See
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).

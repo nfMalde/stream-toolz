@@ -29,15 +29,15 @@ on:
       channel:
         description: 'Channel: alpha and beta are pre-releases (0.1.0-beta), full is a release (0.1.0)'
         type: choice
-        options: [alpha, beta, full]
-        default: alpha
+        options: [beta, alpha, full]
+        default: beta
       bump:
-        description: 'Version bump (ignored when a version is given): none = the package.json version, pre = 0.1.0-alpha → 0.1.0-alpha.2'
+        description: 'Version bump (ignored when a version is given): none = the package.json version, pre = 0.1.0-beta → 0.1.0-beta.2'
         type: choice
         options: [none, pre, patch, minor, major]
         default: none
       version:
-        description: 'Exact version instead (e.g. 0.1.0-alpha.2); empty = from the bump'
+        description: 'Exact version instead (e.g. 0.1.0-beta.2); empty = from the bump'
         required: false
         default: ''
 

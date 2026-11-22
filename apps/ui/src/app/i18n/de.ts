@@ -3,7 +3,7 @@
 import type { ShellTextKey } from './en';
 
 export const de: Record<ShellTextKey, string> = {
-  'app.alpha': 'Alpha',
+  'app.stage': 'Beta',
   'app.noBridge.title': 'Nur in der Desktop-App',
   'app.noBridge.text': 'Diese Oberfläche läuft in der Stream-Toolz-App. Starte sie mit „npm run dev" (Entwicklung) oder als installierte App.',
 

@@ -2,7 +2,7 @@
 // Each module has its own texts, keyed '<id>.…' (modules/<id>/ui/i18n).
 
 export const en = {
-  'app.alpha': 'Alpha',
+  'app.stage': 'Beta',
   'app.noBridge.title': 'Desktop app only',
   'app.noBridge.text': 'This interface runs inside the Stream Toolz app. Start it with "npm run dev" (developers) or the installed app.',
 

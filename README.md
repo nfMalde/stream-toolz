@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <img alt="Status: alpha" src="https://img.shields.io/badge/status-alpha-orange?style=flat-square">
+  <img alt="Status: beta" src="https://img.shields.io/badge/status-beta-orange?style=flat-square">
   <img alt="Platform: Windows" src="https://img.shields.io/badge/platform-Windows-lightgrey?style=flat-square">
   <img alt="Languages: German and English" src="https://img.shields.io/badge/languages-German%20%7C%20English-green?style=flat-square">
   <a href="LICENSE"><img alt="License: proprietary" src="https://img.shields.io/badge/license-proprietary-blue?style=flat-square"></a>
@@ -152,7 +152,7 @@ need nothing at all. The Voice page lets you listen to each one before you choos
 ## Good to know
 
 > [!IMPORTANT]
-> **Stream Toolz is a hobby project, and this is an alpha.** It still has bugs, and things can change between versions.
+> **Stream Toolz is a hobby project, and this is a beta.** It still has bugs, and things can change between versions.
 > Your feedback helps a lot: [report a bug or an idea](https://github.com/nfMalde/stream-toolz/issues/new/choose).
 
 - **Windows 10 or 11.** Linux and macOS come later.
@@ -170,7 +170,7 @@ need nothing at all. The Voice page lets you listen to each one before you choos
 
 ## Contents
 
-- **For users:** [Installing](#installing) · [First start](#first-start) · [OBS](#obs) · [Reporting a bug](#reporting-a-bug) · [Privacy](#privacy) · [Docs](docs/)
+- **For users:** [Installing](#installing) · [First start](#first-start) · [OBS](#obs) · [What Stream Toolz is not](#what-stream-toolz-is-not) · [Reporting a bug](#reporting-a-bug) · [Privacy & monetization](#privacy--monetization) · [Docs](docs/)
 - **For contributors:** [Contributing](#contributing) · [Build from source](#build-from-source) · [Layout](#layout)
 - [License](#license) · [No warranty, no liability](#no-warranty-no-liability) · [Links and support](#links-and-support)
 
@@ -215,23 +215,43 @@ fader. The countdown can also write text files for an OBS text source, so OBS co
 
 ![Output: the OBS browser source, its address and the steps](docs/images/readmychat-output.png)
 
+## What Stream Toolz is not
+
+- **Not an AI, and it will not become one.** The voices are trained speech models that read the chat aloud, and the
+  countdown's parser is a few hundred lines of rules for German and English. Nothing is generated, nothing about you
+  or your viewers is sent anywhere to be analysed. An AI would need servers and money, and Stream Toolz stays free
+  and local.
+- **No servers: no accounts, no cloud, no dashboards.** A web service would mean hosting costs every month. Stream
+  Toolz stays free, so there is none of that. Everything stays on your PC; the only internet connections are Twitch
+  and the voice downloads you start yourself.
+- **Not a second account.** The bot answers as your own Twitch account, through your own Twitch app. A separate bot
+  account may come later.
+- **Not an official product** of Twitch or OBS. Twitch's rules apply to what the app says in your name
+  (see [No warranty, no liability](#no-warranty-no-liability)).
+
 ## Reporting a bug
 
 Open a [bug report](https://github.com/nfMalde/stream-toolz/issues/new?template=bug_report.yml) and attach the newest
 file from the **Logs** folder (Settings → Logs). The logs hold no chat messages, viewer names, tokens or keys; every
 line is masked before it is written. Ideas go to [Idea or wish](https://github.com/nfMalde/stream-toolz/issues/new?template=feature_request.yml).
 
-## Privacy
+## Privacy & monetization
 
 What leaves the PC, and only that: Twitch for the login, the chat and the events; GitHub and Hugging Face for the
 voice downloads, only when you click Install, pinned and checked against a checksum; Twitch's emote pictures, only if
 you switch them on in the Chat Overlay, loaded by OBS. No analytics, no update checks, no server of ours. The login is
 stored encrypted with your Windows account's key. The details are in [docs/03-security.md](docs/03-security.md).
 
+Stream Toolz is 100 % free. Donations are optional and bring no perks: every feature stays free for everyone, and
+there are no ads, no premium tiers and no sponsored voices.
+
 ## Contributing
 
-Bug reports, fixes, tests, translations and ideas are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). Security issues
-go to [SECURITY.md](SECURITY.md), never into a public issue.
+Bug reports, fixes, tests, translations and ideas are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[code of conduct](CODE_OF_CONDUCT.md). Security issues go to [SECURITY.md](SECURITY.md), never into a public issue.
+
+Stream Toolz follows its older sibling [GT Toolz](https://github.com/nfMalde/gt-toolz), a coach for Gran Turismo 7
+by the same author: the same "everything on your PC" idea, the same rules, and proven parts taken over.
 
 ## Build from source
 
@@ -267,8 +287,9 @@ See [docs/01-research-and-plan.md](docs/01-research-and-plan.md), [docs/02-deskt
 
 ## License
 
-Proprietary for now (see [LICENSE](LICENSE)). Third-party components are listed with their licenses in the app under
-About.
+The source is published so anyone can see what the app does; the license is proprietary for now (see
+[LICENSE](LICENSE)). Third-party components are listed with their licenses in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) and in the app under About.
 
 ## No warranty, no liability
 
@@ -284,5 +305,5 @@ voluntary and comes without perks, as every feature stays free for everyone.
 - Donate: [PayPal](https://www.paypal.com/donate/?hosted_button_id=SVZHLRTQ6H4VL)
 - [Twitch](https://www.twitch.tv/maldoe) · [YouTube](https://www.youtube.com/@dermaldoe) · [Instagram](https://www.instagram.com/maldoe_gaming/) · [Facebook](https://www.facebook.com/RealMaldoe) · [X](https://x.com/DerMaldoe)
 
-The logo and colours come from Maldö's stream assets; logo files and links are the same as in GT Toolz
-(`apps/ui/public/maldoe-64/256/512.png`, the link bar at the bottom right and the About page).
+The logo and colours come from Maldö's stream assets; logo files and links are the same as in
+[GT Toolz](https://github.com/nfMalde/gt-toolz).

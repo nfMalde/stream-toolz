@@ -35,19 +35,19 @@ The certificate and its password are secrets like the Twitch login: they live ou
 
 ## Before a release
 
-The three checks in [02-desktop-app.md](02-desktop-app.md) "Before a release", recorded in [05-release-check.md](05-release-check.md). Then: the changes users notice stand under `## [Unreleased]` in `CHANGELOG.md`; the release workflow (below) sets the version in every `package.json` and the lockfile and moves "Unreleased" to the version. For a local build: `node scripts/release/plan.mjs --channel=alpha --bump=pre --apply`, then `npm run release`, install the result on a clean Windows user, and run through the setup assistant once.
+The three checks in [02-desktop-app.md](02-desktop-app.md) "Before a release", recorded in [05-release-check.md](05-release-check.md). Then: the changes users notice stand under `## [Unreleased]` in `CHANGELOG.md`; the release workflow (below) sets the version in every `package.json` and the lockfile and moves "Unreleased" to the version. For a local build: `node scripts/release/plan.mjs --channel=beta --bump=pre --apply`, then `npm run release`, install the result on a clean Windows user, and run through the setup assistant once.
 
 ## Versions and changelog
 
-- **The version** is set in the root `package.json` (now `0.0.1-alpha`); every workspace's `package.json` carries the same version, and step 1 refuses a mismatch. The app shows `app.getVersion()` from the staged `package.json`.
-- Versions follow semver; a pre-release has a suffix (`0.0.1-alpha`, `0.0.1-alpha.2`, `0.1.0-beta`).
+- **The version** is set in the root `package.json` (now `0.1.0-beta`: the first release leaves the alpha, the user, 2026-11-22); every workspace's `package.json` carries the same version, and step 1 refuses a mismatch. The app shows `app.getVersion()` from the staged `package.json`.
+- Versions follow semver; a pre-release has a suffix (`0.1.0-beta`, `0.1.0-beta.2`); `alpha` stays available as a channel.
 - **Changelog:** `CHANGELOG.md` (Keep a Changelog). Each release on GitHub shows its section.
 - **The release plan** (`scripts/release/plan.mjs`, from GT Toolz without its news files) works out the next version and, with `--apply`, prepares the tree for it: the version in every `package.json` and the lockfile, `CHANGELOG.md`'s "Unreleased" section as the version's (with the date). It writes the version's changelog section plus the download notes to `release/notes.md`.
 
   ```bash
-  node scripts/release/plan.mjs --channel=alpha --bump=pre          # 0.0.1-alpha → 0.0.1-alpha.2 (only shows the plan)
-  node scripts/release/plan.mjs --channel=full                      # 0.0.1-alpha → 0.0.1
-  node scripts/release/plan.mjs --channel=beta --version=0.1.0-beta --apply
+  node scripts/release/plan.mjs --channel=beta --bump=pre           # 0.1.0-beta → 0.1.0-beta.2 (only shows the plan)
+  node scripts/release/plan.mjs --channel=full                      # 0.1.0-beta → 0.1.0
+  node scripts/release/plan.mjs --channel=beta --version=0.2.0-beta --apply
   ```
 
   Channels: `alpha` and `beta` (pre-releases, `<version>-alpha[.n]`, `<version>-beta[.n]`) and `full`. Bumps: `none`, `pre`, `patch`, `minor`, `major`; an explicit `--version` wins. Tested in `apps/desktop/test/release-plan.test.ts`.

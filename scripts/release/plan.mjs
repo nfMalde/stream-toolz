@@ -118,7 +118,7 @@ function setVersion(version) {
 
 export default function plan(args) {
   const current = readJson(path.join(ROOT, 'package.json')).version;
-  const { version, prerelease } = planVersion({ current, version: typeof args.version === 'string' ? args.version : '', bump: args.bump || 'none', channel: args.channel || 'alpha' });
+  const { version, prerelease } = planVersion({ current, version: typeof args.version === 'string' ? args.version : '', bump: args.bump || 'none', channel: args.channel || 'beta' });
   const changes = [];
   const date = new Date().toISOString().slice(0, 10);
 
