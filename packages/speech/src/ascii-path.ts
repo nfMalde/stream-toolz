@@ -7,6 +7,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const cache = new Map<string, string>();
+/** PowerShell's start plus the lookup; a slow machine gets this long before the folder stays as it is. */
+export const SHORT_PATH_TIMEOUT_MS = 30_000;
 
 /**
  * The folder as a path the engines can read: itself when it is ASCII (or not on Windows), else its short
@@ -46,7 +48,8 @@ function shortPath(dir: string): string {
     env: { ...process.env, STZ_SHORT_PATH_OF: dir },
     encoding: 'utf8',
     windowsHide: true,
-    timeout: 15_000,
+    // A cold PowerShell start took over 15 s on a GitHub Windows runner (2026-11-22); this runs once per folder.
+    timeout: SHORT_PATH_TIMEOUT_MS,
   });
   return out.trim();
 }
